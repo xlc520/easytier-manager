@@ -1,0 +1,91 @@
+/**
+ * @see https://www.electron.build/configuration/
+ */
+{
+  "appId": "easytier",
+  // 应用程序名称
+  //  "name": "",
+  // 产品名称
+  //  "productName": "",
+  // 工件文件名
+  //  "artifactName": "",
+  //内部版本号
+  "buildNumber": "100",
+  //内部版本
+  "buildVersion": "1.0.0",
+  //版权
+  "copyright": "easytier",
+  "icon": "src/assets/imgs/logo.png",
+  "asar": true,
+  "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+  "directories": {
+    "output": "release/${version}"
+  },
+  "files": [
+    "dist-electron",
+    "dist",
+    "!**/*.map",
+    "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+    "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+    "!**/node_modules/*.d.ts",
+    "!**/node_modules/.bin",
+    "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+    "!.editorconfig",
+    "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+    "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+    "!**/{appveyor.yml,.travis.yml,circle.yml}",
+    "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          //          "ia32",
+          "x64"
+        ]
+      }
+    ]
+  },
+  "mac": {
+    "target": [
+      "dmg"
+    ],
+    "hardenedRuntime": true,
+    "darkModeSupport": true,
+    "gatekeeperAssess": true,
+  },
+  "linux": {
+    "target": [
+      "deb",
+      "tar.gz",
+      "AppImage",
+      "rpm"
+    ],
+    "extraFiles": [
+      {
+        "filter": [
+          "LICENSE",
+        ]
+      },
+    ]
+  },
+  "appImage": {
+    "executableArgs": [
+      " "
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  //  要保留的 electron locales
+  "electronLanguages": [
+    "zh-CN",
+    "en-US"
+  ]
+}
