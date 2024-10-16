@@ -59,7 +59,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'hostname',
-    label: t('easyTire.hostname'),
+    label: t('easytier.hostname'),
     table: {
       hidden: true
     },
@@ -69,14 +69,14 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'network_name',
-    label: t('easyTire.network_name'),
+    label: t('easytier.network_name'),
     search: {
       hidden: true
     }
   },
   {
     field: 'network_secret',
-    label: t('easyTire.network_secret'),
+    label: t('easytier.network_secret'),
     table: {
       hidden: true
     },
@@ -86,7 +86,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'dhcp',
-    label: t('easyTire.dhcp'),
+    label: t('easytier.dhcp'),
     table: {
       hidden: true
     },
@@ -96,7 +96,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'ipv4Vir',
-    label: t('easyTire.ipv4Vir'),
+    label: t('easytier.ipv4Vir'),
     table: {
       hidden: true
     },
@@ -106,7 +106,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'peers',
-    label: t('easyTire.peers'),
+    label: t('easytier.peers'),
     table: {
       hidden: true
     },
@@ -116,7 +116,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'proxy_network',
-    label: t('easyTire.proxy_network'),
+    label: t('easytier.proxy_network'),
     table: {
       hidden: true
     },
@@ -126,7 +126,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'default_protocol',
-    label: t('easyTire.default_protocol'),
+    label: t('easytier.default_protocol'),
     table: {
       hidden: true
     },
@@ -137,7 +137,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   {
     field: 'console_log_level',
     // trace, debug, info, warn, error, off
-    label: t('easyTire.console_log_level'),
+    label: t('easytier.console_log_level'),
     table: {
       hidden: true
     },
@@ -148,7 +148,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   {
     field: 'file_log_level',
     // trace, debug, info, warn, error, off
-    label: t('easyTire.file_log_level'),
+    label: t('easytier.file_log_level'),
     table: {
       hidden: true
     },
@@ -158,7 +158,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'file_log_dir',
-    label: t('easyTire.file_log_dir'),
+    label: t('easytier.file_log_dir'),
     table: {
       hidden: true
     },
@@ -192,7 +192,7 @@ const crudSchemas = reactive<CrudSchema[]>([
                   action(row, 'edit')
                 }}
               >
-                {t('easyTire.editNetConfig')}
+                {t('easytier.editNetConfig')}
               </BaseButton>
               <BaseButton
                 type="primary"
@@ -201,7 +201,7 @@ const crudSchemas = reactive<CrudSchema[]>([
                   action(row, 'edit')
                 }}
               >
-                {t('easyTire.editNetConfigForm')}
+                {t('easytier.editNetConfigForm')}
               </BaseButton>
               <BaseButton type="danger" onClick={() => delConfig(row)}>
                 {t('exampleDemo.del')}
@@ -262,13 +262,13 @@ const action = async (row: any, type: string) => {
   dialogVisible.value = true
 }
 const AddAction = () => {
-  dialogTitle.value = t('easyTire.addNetConfig')
+  dialogTitle.value = t('easytier.addNetConfig')
   dialogVisible.value = true
   actionType.value = 'add'
   editType.value = ''
 }
 const AddFormAction = () => {
-  dialogTitle.value = t('easyTire.addNetConfigForm')
+  dialogTitle.value = t('easytier.addNetConfigForm')
   dialogVisible.value = true
   actionType.value = 'add'
   editType.value = 'form'
@@ -361,11 +361,11 @@ const updateDataConfig = (val: string) => {
     <ContentWrap class="flex-[3] ml-10px">
       <div class="mb-10px">
         <BaseButton type="primary" @click="AddFormAction"
-          >{{ t('easyTire.addNetConfigForm') }}
+          >{{ t('easytier.addNetConfigForm') }}
         </BaseButton>
-        <BaseButton type="primary" @click="AddAction">{{ t('easyTire.addNetConfig') }}</BaseButton>
+        <BaseButton type="primary" @click="AddAction">{{ t('easytier.addNetConfig') }}</BaseButton>
         <BaseButton type="info" @click="refreshAction"
-          >{{ t('easyTire.reloadNetConfig') }}
+          >{{ t('easytier.reloadNetConfig') }}
         </BaseButton>
       </div>
       <!--<Search

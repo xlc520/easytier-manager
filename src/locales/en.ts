@@ -572,7 +572,7 @@ export default {
     title:
       'Avatar component for avatar list, secondary packaging based on element plus Avatar component'
   },
-  easyTire: {
+  easytier: {
     id: 'ID',
     peerId: 'Peer ID',
     peerInfo: 'Peer Info',

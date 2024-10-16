@@ -35,7 +35,7 @@ export const runChildEasyTier = async (param: string) => {
   try {
     return await ipcRenderer.invoke('runChildEasyTier', param)
   } catch (error) {
-    console.error('启动EasyTire异常:', error)
+    console.error('启动EasyTier异常:', error)
   }
 }
 

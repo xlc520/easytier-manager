@@ -22,7 +22,7 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'id',
-    label: t('easyTire.id'),
+    label: t('easytier.id'),
     search: {
       hidden: true
     },
@@ -32,56 +32,56 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'ipv4',
-    label: t('easyTire.ipv4Vir'),
+    label: t('easytier.ipv4Vir'),
     width: 100
   },
   // {
   //   field: 'ipv4Local',
-  //   label: t('easyTire.ipv4Local')
+  //   label: t('easytier.ipv4Local')
   // },
   {
     field: 'hostname',
-    label: t('easyTire.hostname'),
+    label: t('easytier.hostname'),
     showOverflowTooltip: true
   },
   {
     field: 'cost',
-    label: t('easyTire.cost'),
+    label: t('easytier.cost'),
     search: {
       hidden: true
     }
   },
   {
     field: 'lat_ms',
-    label: t('easyTire.lat_ms'),
+    label: t('easytier.lat_ms'),
     search: {
       hidden: true
     }
   },
   {
     field: 'loss_rate',
-    label: t('easyTire.loss_rate'),
+    label: t('easytier.loss_rate'),
     search: {
       hidden: true
     }
   },
   {
     field: 'rx_bytes',
-    label: t('easyTire.rx_bytes'),
+    label: t('easytier.rx_bytes'),
     search: {
       hidden: true
     }
   },
   {
     field: 'tx_bytes',
-    label: t('easyTire.tx_bytes'),
+    label: t('easytier.tx_bytes'),
     search: {
       hidden: true
     }
   },
   {
     field: 'tunnel_proto',
-    label: t('easyTire.tunnel_proto'),
+    label: t('easytier.tunnel_proto'),
     search: {
       hidden: true
     },
@@ -91,14 +91,14 @@ const crudSchemas = reactive<CrudSchema[]>([
   },
   {
     field: 'nat_type',
-    label: t('easyTire.nat_type'),
+    label: t('easytier.nat_type'),
     search: {
       hidden: true
     }
   },
   {
     field: 'version',
-    label: t('easyTire.version'),
+    label: t('easytier.version'),
     search: {
       hidden: true
     }

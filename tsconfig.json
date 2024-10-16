@@ -10,7 +10,10 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "jsxImportSource": "vue",
-    "lib": ["esnext", "dom"],
+    "lib": [
+      "esnext",
+      "dom"
+    ],
     "baseUrl": "./",
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
@@ -21,8 +24,11 @@
     "experimentalDecorators": true,
     "noImplicitAny": false,
     "skipLibCheck": true,
+    "noEmit": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     },
     "types": [
       "@intlify/unplugin-vue-i18n/types",
@@ -32,6 +38,18 @@
       "vite-plugin-svg-icons/client"
     ]
   },
-  "include": ["src", "types/**/*.d.ts", "mock/**/*.ts"]
-  // "exclude": ["dist", "node_modules"]
+  "include": [
+    "src",
+    "types/**/*.d.ts",
+    "mock/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "dist-electron",
+    "release",
+    ".npmrc",
+    ".husky",
+    "LICENSE"
+  ]
 }

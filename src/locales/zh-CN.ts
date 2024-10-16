@@ -561,7 +561,7 @@ export default {
   avatarsDemo: {
     title: '头像列表组件，基于element-plus的Avatar组件二次封装'
   },
-  easyTire: {
+  easytier: {
     id: 'ID',
     peerId: '节点ID',
     peerInfo: '当前节点信息',

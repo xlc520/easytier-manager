@@ -55,7 +55,7 @@ const indexHtml = join(process.env.DIST, 'index.html')
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: 'EasyTire 组网',
+    title: 'EasyTier 组网',
     icon: join(process.env.PUBLIC, 'favicon.ico'),
     width: 950,
     height: 700,
@@ -66,12 +66,12 @@ async function createWindow() {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       /** 是否在 Web Worker 中启用节点集成 */
       nodeIntegration: true, // 启用 Node.js 集成
-      contextIsolation: false, // 禁用上下文隔离（可选，但通常与 nodeIntegration 一起使用）
+      contextIsolation: false // 禁用上下文隔离（可选，但通常与 nodeIntegration 一起使用）
       // enableRemoteModule: true, // 启用 remote 模块（可选，但通常与 nodeIntegration 一起使用）
       // sandbox: false, // 开启沙盒则preload脚本被禁用，所以得设为false
       /** 是否启用 DevTools 仅在开发环境可用 */
       // devTools: !app.isPackaged
-      devTools: true
+      // devTools: true
     },
     // 是否无边框窗口
     frame: true
@@ -140,7 +140,7 @@ ipcMain.handle('open-win', (event, arg) => {
     childWindow.loadFile(indexHtml, { hash: arg })
   } else {
     childWindow.loadURL(`${url}#${arg}`)
-    childWindow.webContents.openDevTools({ mode: 'undocked', activate: true })
+    // childWindow.webContents.openDevTools({ mode: 'undocked', activate: true })
   }
 })
 

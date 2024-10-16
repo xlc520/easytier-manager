@@ -1,7 +1,7 @@
 {
   "name": "easytire",
   "version": "1.0.0",
-  "description": "EasyTire 组网，内网穿透",
+  "description": "EasyTier 组网，内网穿透",
   "main": "dist-electron/main/index.js",
   "author": "cheng",
   "email": "xulinch@88.com",

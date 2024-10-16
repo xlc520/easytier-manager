@@ -2,7 +2,7 @@
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { Table } from '@/components/Table'
-import { onBeforeMount, reactive, ref, unref, watch } from 'vue'
+import { onBeforeMount, onMounted, onUpdated, reactive, ref, unref, watch } from 'vue'
 import { ElMessage, ElOption, ElOptionGroup, ElSelect, ElTree } from 'element-plus'
 import { deleteUserByIdApi } from '@/api/department'
 import { useTable } from '@/hooks/web/useTable'
@@ -80,43 +80,43 @@ const allConfigOptions = reactive([
 const nodeInfoSchema = reactive<DescriptionsSchema[]>([
   {
     field: 'Hostname',
-    label: t('easyTire.hostname')
+    label: t('easytier.hostname')
   },
   {
     field: 'Virtual IP',
-    label: t('easyTire.ipv4Vir')
+    label: t('easytier.ipv4Vir')
   },
   {
     field: 'Public IP',
-    label: t('easyTire.ipPublic')
+    label: t('easytier.ipPublic')
   },
   {
     field: 'UDP Stun Type',
-    label: t('easyTire.nat_type')
+    label: t('easytier.nat_type')
   },
   {
     field: 'Peer ID',
-    label: t('easyTire.peerId')
+    label: t('easytier.peerId')
   },
   {
     field: 'Proxy CIDRs',
-    label: t('easyTire.proxy_network')
+    label: t('easytier.proxy_network')
   },
   {
     field: 'Listener 1',
-    label: t('easyTire.listener1')
+    label: t('easytier.listener1')
   },
   {
     field: 'Listener 2',
-    label: t('easyTire.listener2')
+    label: t('easytier.listener2')
   },
   {
     field: 'Listener 3',
-    label: t('easyTire.listener3')
+    label: t('easytier.listener3')
   },
   {
     field: 'Listener 4',
-    label: t('easyTire.listener4')
+    label: t('easytier.listener4')
   }
 ])
 watch(
@@ -133,6 +133,9 @@ onBeforeMount(async () => {
   } catch (e) {
     console.error('获取配置异常', e)
   }
+})
+onMounted(() => {
+  console.log('end:', new Date())
 })
 const getConfigList = async () => {
   const fileList = await getFilesByExtension('config', '.toml')
@@ -269,7 +272,7 @@ const updateDataConfig = (val: string) => {
 
     <ContentWrap class="flex-[3] ml-10px">
       <Descriptions
-        :title="t('easyTire.peerInfo')"
+        :title="t('easytier.peerInfo')"
         :data="nodeInfo"
         :schema="nodeInfoSchema"
         :show="descriptionCollapse"
@@ -291,11 +294,11 @@ const updateDataConfig = (val: string) => {
             />
           </ElOptionGroup>
         </ElSelect>
-        <BaseButton type="success" @click="startAction">{{ t('easyTire.startNet') }}</BaseButton>
+        <BaseButton type="success" @click="startAction">{{ t('easytier.startNet') }}</BaseButton>
         <BaseButton type="danger" :disabled="stopDisabled" @click="stopAction"
-          >{{ t('easyTire.stopNet') }}
+          >{{ t('easytier.stopNet') }}
         </BaseButton>
-        <BaseButton type="primary" @click="viewLogAction">{{ t('easyTire.view_log') }}</BaseButton>
+        <BaseButton type="primary" @click="viewLogAction">{{ t('easytier.view_log') }}</BaseButton>
       </div>
       <!--<Search
         :schema="allSchemas.searchSchema"

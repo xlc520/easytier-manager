@@ -4,3 +4,4 @@ public/*
 /dist*
 /src/types/env.d.ts
 /docs/**/*
+.npmrc

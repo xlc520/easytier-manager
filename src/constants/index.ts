@@ -16,7 +16,7 @@ export const REQUEST_TIMEOUT = 60000
 /**
  * 不重定向白名单
  */
-export const NO_REDIRECT_WHITE_LIST = ['/login']
+export const NO_REDIRECT_WHITE_LIST = ['/', '/config', '/setting', '/login']
 
 /**
  * 不重置路由白名单

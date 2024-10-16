@@ -107,7 +107,7 @@ onMounted(async () => {
               <el-icon size="16px">
                 <Folder />
               </el-icon>
-              {{ t('easyTire.corePath') }}
+              {{ t('easytier.corePath') }}
             </div>
           </template>
           {{ form.corePath }}
@@ -115,9 +115,9 @@ onMounted(async () => {
             <CircleCheck />
           </el-icon>
           <el-button class="ml-5" type="primary" @click="checkCorePath"
-            >{{ t('easyTire.checkCorePath') }}
+            >{{ t('easytier.checkCorePath') }}
           </el-button>
-          <el-button type="info" @click="copyCorePath">{{ t('easyTire.copyCorePath') }}</el-button>
+          <el-button type="info" @click="copyCorePath">{{ t('easytier.copyCorePath') }}</el-button>
         </el-descriptions-item>
 
         <el-descriptions-item>
@@ -126,7 +126,7 @@ onMounted(async () => {
               <el-icon size="16px">
                 <Download />
               </el-icon>
-              {{ t('easyTire.downLoadCore') }}
+              {{ t('easytier.downLoadCore') }}
             </div>
           </template>
           请先检测内核是否已存在再下载，选择版本时可以手动输入
@@ -147,7 +147,7 @@ onMounted(async () => {
             />
           </el-select>
           <el-button class="ml-5" type="primary" @click="downLoadCore"
-            >{{ t('easyTire.rx_bytes') }}
+            >{{ t('easytier.rx_bytes') }}
           </el-button>
         </el-descriptions-item>
       </el-descriptions>
