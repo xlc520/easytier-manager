@@ -2,6 +2,9 @@ import os from 'os'
 import path from 'path'
 import { exec, spawn } from 'child_process'
 import { app } from 'electron'
+import axios from 'axios'
+
+const AdmZip = require('adm-zip')
 
 const fs = require('fs').promises
 
@@ -291,46 +294,66 @@ export const getSysInfo = async () => {
   })
 }
 
-/**
- * 下载文件到本地指定目录
- * @param {string} url - 文件的网络地址
- * @param {string} savePath - 保存文件的本地路径
- * @param {Function} callback - 下载完成后的回调函数
- */
-function downloadFile(url, savePath, callback) {
-  const request = net.request(url)
+export const download = async (event, url: string, targetPath: string) => {
+  try {
+    const savePath = path.join(userDataPath, targetPath)
+    const response = await axios({
+      url,
+      method: 'GET',
+      responseType: 'stream'
+    })
+    const fs = require('fs')
+    const writer = fs.createWriteStream(savePath)
+    response.data.pipe(writer)
 
-  request.on('response', (response) => {
-    const fileStream = fs.createWriteStream(savePath)
-    let fileSize = 0
-
-    response.on('data', (chunk) => {
-      fileStream.write(chunk)
-      fileSize += chunk.length
+    writer.on('finish', () => {
+      event.reply('download-complete', savePath)
     })
 
-    response.on('end', () => {
-      fileStream.end()
-      console.log(`文件下载完成，保存到: ${savePath}`)
-      if (callback) {
-        callback(null, fileSize)
+    writer.on('error', (err) => {
+      console.log('download-error', err)
+      event.reply('download-error', err.message)
+    })
+  } catch (err) {
+    console.log('download-error2', err)
+    event.reply('download-error', err.message)
+  }
+}
+
+export const extractZip = async (event, zipPath, targetDir) => {
+  try {
+    const zip = new AdmZip(zipPath)
+    const zipEntries = zip.getEntries()
+
+    zipEntries.forEach((entry) => {
+      if (entry.isDirectory) {
+        // 如果是目录，创建目录
+        const dirPath = path.join(targetDir, entry.entryName)
+        if (!fs.existsSync(dirPath)) {
+          fs.mkdirSync(dirPath, { recursive: true })
+        }
+      } else {
+        // 如果是文件，解压文件
+        const filePath = path.join(targetDir, entry.entryName)
+        zip.extractEntryTo(entry, targetDir, false, true)
       }
     })
 
-    response.on('error', (error) => {
-      console.error(`下载文件时发生错误: ${error.message}`)
-      if (callback) {
-        callback(error)
-      }
-    })
-  })
+    event.reply('extract-complete', targetDir)
+  } catch (err) {
+    event.reply('extract-error', err.message)
+  }
+}
 
-  request.on('error', (error) => {
-    console.error(`请求文件时发生错误: ${error.message}`)
-    if (callback) {
-      callback(error)
+export const unZipFile = (src: string, dest: string, callBack: (_?: any) => void) => {
+  const unzip = new AdmZip(src)
+  // 解压多个文件到目录文件
+  unzip.extractAllToAsync(dest, /*overwrite*/ true, (err: any) => {
+    if (err) {
+      callBack?.(err)
+    } else {
+      // DeleteFile(src);
+      callBack?.()
     }
   })
-
-  request.end()
 }

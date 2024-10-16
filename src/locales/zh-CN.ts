@@ -606,6 +606,7 @@ export default {
     corePath: '内核路径',
     checkCorePath: '检测内核是否存在',
     copyCorePath: '复制内核目录',
-    downLoadCore: '下载内核'
+    downLoadCore: '下载内核',
+    coreEror: '内核不存在或无可执行权限！'
   }
 }

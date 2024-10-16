@@ -20,9 +20,7 @@ const request = (option: AxiosConfig) => {
   })
 }
 export default {
-  request: <T = any>(option: AxiosConfig) => {
-    return request({ ...option }) as Promise<IResponse<T>>
-  },
+  request,
   get: <T = any>(option: AxiosConfig) => {
     return request({ method: 'get', ...option }) as Promise<IResponse<T>>
   },

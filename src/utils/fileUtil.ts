@@ -61,3 +61,27 @@ export const getAppDataPath = async () => {
     console.error('Error:', error)
   }
 }
+
+export const download = async (url: string, savePath: string) => {
+  try {
+    await ipcRenderer.send('download', url, savePath)
+  } catch (error) {
+    console.error('Error:', error)
+  }
+}
+
+export const downloadComplete = async (callback) => {
+  try {
+    await ipcRenderer.on('download-complete', callback)
+  } catch (error) {
+    console.error('Error:', error)
+  }
+}
+
+export const downloadError = async (callback) => {
+  try {
+    return await ipcRenderer.on('download-error', callback)
+  } catch (error) {
+    console.error('Error:', error)
+  }
+}

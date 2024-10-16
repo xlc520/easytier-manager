@@ -615,6 +615,7 @@ export default {
     reloadNetConfig: 'Reload network configuration',
     corePath: 'Core path',
     copyCorePath: 'Copy Path',
-    downLoadCore: 'DownLoad Core'
+    downLoadCore: 'DownLoad Core',
+    coreEror: 'Core Kernel does not exist or has no executable permission！'
   }
 }

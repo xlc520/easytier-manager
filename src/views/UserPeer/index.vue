@@ -155,10 +155,11 @@ const getConfigList = async () => {
   currentNodeKey.value = tmpList[0].network_name
 }
 const getNodeInfo = async () => {
+  const maxRetry = 10
   let retryTime = 1
   while (true) {
     // todo 可配置retryTime
-    if (easyTierStore.stopLoop || retryTime > 5) {
+    if (easyTierStore.stopLoop || retryTime > maxRetry) {
       break
     }
     const res = await execCli('node')
@@ -166,8 +167,12 @@ const getNodeInfo = async () => {
       retryTime++
       continue
     }
-    if (nodeInfo.value['Virtual IP']) {
-      retryTime = 6
+    if (
+      nodeInfo.value['Virtual IP'] &&
+      nodeInfo.value['Public IP'] &&
+      nodeInfo.value['UDP Stun Type']
+    ) {
+      retryTime = maxRetry
     }
     nodeInfo.value = parseNodeInfo(res) as string
     await sleep(7000)

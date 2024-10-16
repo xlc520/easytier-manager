@@ -14,6 +14,7 @@ const hasPermission = (value: string): boolean => {
   }
   return false
 }
+
 function hasPermi(el: Element, binding: DirectiveBinding) {
   const value = binding.value
 
@@ -22,7 +23,8 @@ function hasPermi(el: Element, binding: DirectiveBinding) {
     el.parentNode?.removeChild(el)
   }
 }
-const mounted = (el: Element, binding: DirectiveBinding<any>) => {
+
+const mounted = (el: Element, binding: DirectiveBinding) => {
   hasPermi(el, binding)
 }
 

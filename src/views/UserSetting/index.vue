@@ -7,7 +7,7 @@ import _ from 'lodash'
 import { exeExist, getSysInfo } from '@/utils/execUtil'
 import { coreUrl } from '@/constants/easytier'
 // import { getGithubVer } from '@/api/easytier'
-import { getUserDataPath } from '@/utils/fileUtil'
+import { download, downloadComplete, downloadError, getUserDataPath } from '@/utils/fileUtil'
 import path from 'path'
 import { CircleCheck, Download, Folder } from '@element-plus/icons-vue'
 import { useClipboard } from '@vueuse/core'
@@ -67,12 +67,21 @@ const downLoadCore = async () => {
     version: 'v' + verSelect.value
   })
   console.log('下载URL:', downUrl)
+  await download('https://csdnimg.cn/release/blogv2/dist/pc/img/original.png', 'bin')
+  await downloadComplete((res) => {
+    console.log('下载res', res)
+  })
+  await downloadError((err) => {
+    console.log('下载err', err)
+  })
   // 尝试加速链接
 }
 const checkCorePath = async () => {
   const exist = await exeExist(form.corePath + ' -V')
   if (exist) {
     checkCorePathSuccess.value = true
+  } else {
+    ElMessage.error({ message: t('easytier.coreEror'), duration: 4000 })
   }
 }
 const copyCorePath = async () => {

@@ -11,11 +11,13 @@
 
 import { app, BrowserWindow, ipcMain, shell, Menu } from 'electron'
 import { release } from 'os'
-import { join } from 'path'
+import path, { join } from 'path'
 import {
   deleteFile,
+  download,
   execCli,
   exeExist,
+  extractZip,
   getFilesByExtension,
   getRunningProcesses,
   getSysInfo,
@@ -24,6 +26,7 @@ import {
   runChildEasyTier,
   writeFile
 } from './mainUtil'
+import fs from 'fs-extra'
 
 process.env.DIST_ELECTRON = join(__dirname, '..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist')
@@ -66,7 +69,8 @@ async function createWindow() {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       /** 是否在 Web Worker 中启用节点集成 */
       nodeIntegration: true, // 启用 Node.js 集成
-      contextIsolation: false // 禁用上下文隔离（可选，但通常与 nodeIntegration 一起使用）
+      contextIsolation: false, // 禁用上下文隔离（可选，但通常与 nodeIntegration 一起使用）
+      webSecurity: false // 禁用web安全策略
       // enableRemoteModule: true, // 启用 remote 模块（可选，但通常与 nodeIntegration 一起使用）
       // sandbox: false, // 开启沙盒则preload脚本被禁用，所以得设为false
       /** 是否启用 DevTools 仅在开发环境可用 */
@@ -185,4 +189,10 @@ ipcMain.handle('runChildEasyTier', async (event, param) => runChildEasyTier(para
 ipcMain.handle(
   'getRunningProcesses',
   async (event, programName): Promise<Array<any>> => getRunningProcesses(programName)
+)
+
+ipcMain.on('download', async (event, url, savePath) => download(event, url, savePath))
+// 处理压缩包解压
+ipcMain.on('extract-zip', async (event, zipPath, targetDir) =>
+  extractZip(event, zipPath, targetDir)
 )
