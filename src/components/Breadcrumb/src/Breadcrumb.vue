@@ -92,6 +92,7 @@ export default defineComponent({
 .@{prefix-cls} {
   :deep(&__item) {
     display: flex;
+
     .@{prefix-cls}__inner {
       display: flex;
       align-items: center;

@@ -51,7 +51,7 @@ const editor = ref<any>(null)
 const data = ref(props.value)
 // const editor_height = ref(`${props.height}px`)
 // const emit = defineEmits(['contentChange'])
-const emit = defineEmits<{
+defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
 onMounted(() => {

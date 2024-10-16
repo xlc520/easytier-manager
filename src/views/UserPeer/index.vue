@@ -2,7 +2,7 @@
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { Table } from '@/components/Table'
-import { onBeforeMount, onMounted, onUpdated, reactive, ref, unref, watch } from 'vue'
+import { onBeforeMount, onMounted, reactive, ref, unref, watch } from 'vue'
 import { ElMessage, ElOption, ElOptionGroup, ElSelect, ElTree } from 'element-plus'
 import { deleteUserByIdApi } from '@/api/department'
 import { useTable } from '@/hooks/web/useTable'
