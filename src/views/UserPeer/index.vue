@@ -2,7 +2,7 @@
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { Table } from '@/components/Table'
-import { onBeforeMount, onMounted, reactive, ref, unref, watch } from 'vue'
+import { onBeforeMount, reactive, ref, unref, watch } from 'vue'
 import { ElMessage, ElOption, ElOptionGroup, ElSelect, ElTree } from 'element-plus'
 import { deleteUserByIdApi } from '@/api/department'
 import { useTable } from '@/hooks/web/useTable'
@@ -13,7 +13,7 @@ import { BaseButton } from '@/components/Button'
 import crudSchemas from './crudSchemas'
 import MonacoEditor from '@/components/monaco-editor/index.vue'
 import { getFilesByExtension, readFile } from '@/utils/fileUtil'
-import { useEasyTierStore } from '@/store/modules/easytire'
+import { useEasyTierStore } from '@/store/modules/easytier'
 import { LOG_PATH } from '@/constants/easytier'
 import dayjs from 'dayjs'
 import {
@@ -27,7 +27,7 @@ import { parseNodeInfo, parsePeerInfo } from '@/utils/easyTierUtil'
 import { Descriptions, DescriptionsSchema } from '@/components/Descriptions'
 
 const { t } = useI18n()
-const easyTireStore = useEasyTierStore()
+const easyTierStore = useEasyTierStore()
 const { tableRegister, tableState, tableMethods } = useTable({
   fetchDataApi: async () => {
     const res = {
@@ -134,12 +134,10 @@ onBeforeMount(async () => {
     console.error('获取配置异常', e)
   }
 })
-onMounted(() => {
-  console.log('end:', new Date())
-})
+
 const getConfigList = async () => {
   const fileList = await getFilesByExtension('config', '.toml')
-  easyTireStore.setFileList(fileList)
+  easyTierStore.setFileList(fileList)
   let tmpList: any = []
   let tmpList2: any = []
   let tmpList3: any = []
@@ -149,9 +147,9 @@ const getConfigList = async () => {
     tmpList3.push({ value: fileName, label: fileName })
     tmpList2.push(fileName)
   })
-  easyTireStore.setConfigList(tmpList)
-  easyTireStore.setFileListNoSuffix(tmpList2)
-  easyTireStore.setAllConfigOptions(tmpList3)
+  easyTierStore.setConfigList(tmpList)
+  easyTierStore.setFileListNoSuffix(tmpList2)
+  easyTierStore.setAllConfigOptions(tmpList3)
   allConfigOptions[1].options = tmpList3
   // todo 使用上次的配置
   currentNodeKey.value = tmpList[0].network_name
@@ -160,17 +158,18 @@ const getNodeInfo = async () => {
   let retryTime = 1
   while (true) {
     // todo 可配置retryTime
-    if (easyTireStore.stopLoop || retryTime > 5) {
+    if (easyTierStore.stopLoop || retryTime > 5) {
       break
     }
     const res = await execCli('node')
-    nodeInfo.value = parseNodeInfo(res) as string
     if (!res) {
       retryTime++
+      continue
     }
     if (nodeInfo.value['Virtual IP']) {
       retryTime = 6
     }
+    nodeInfo.value = parseNodeInfo(res) as string
     await sleep(7000)
   }
 }
@@ -178,7 +177,7 @@ const getPeerInfo = async () => {
   let retryTime = 1
   while (true) {
     // todo 可配置retryTime
-    if (easyTireStore.stopLoop || retryTime > 5) {
+    if (easyTierStore.stopLoop || retryTime > 5) {
       break
     }
     const res = await execCli('peer')
@@ -206,7 +205,7 @@ const startAction = async () => {
   console.log('开始运行配置:', currentNodeKey.value)
   await runChildEasyTier(currentNodeKey.value + '.toml').then(() => {
     stopDisabled.value = false
-    easyTireStore.setStopLoop(false)
+    easyTierStore.setStopLoop(false)
     getNodeInfo()
     getPeerInfo()
     descriptionCollapse.value = true
@@ -225,7 +224,7 @@ const stopAction = async () => {
       ElMessage.success(t('common.accessSuccess'))
     }
   }
-  easyTireStore.setStopLoop(true)
+  easyTierStore.setStopLoop(true)
 }
 
 const viewLogAction = async () => {

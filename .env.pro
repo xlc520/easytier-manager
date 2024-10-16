@@ -20,7 +20,7 @@ VITE_SOURCEMAP=false
 VITE_OUT_DIR=dist-pro
 
 # 标题
-VITE_APP_TITLE=EasyTier 组网
+VITE_APP_TITLE='EasyTier 组网'
 
 # 是否包分析
 VITE_USE_BUNDLE_ANALYZER=true

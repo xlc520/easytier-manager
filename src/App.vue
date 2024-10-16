@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeMount } from 'vue'
+import { computed } from 'vue'
 import { useAppStore } from '@/store/modules/app'
 import { ConfigGlobal } from '@/components/ConfigGlobal'
 import { useDesign } from '@/hooks/web/useDesign'
 
-onBeforeMount(() => {
-  console.log('start:', new Date())
-})
 const { getPrefixCls } = useDesign()
 
 const prefixCls = getPrefixCls('app')

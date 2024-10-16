@@ -1,5 +1,5 @@
 {
-  "name": "easytire",
+  "name": "easytier",
   "version": "1.0.0",
   "description": "EasyTier 组网，内网穿透",
   "main": "dist-electron/main/index.js",

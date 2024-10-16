@@ -13,7 +13,7 @@ import { CrudSchema, useCrudSchemas } from '@/hooks/web/useCrudSchemas'
 import { BaseButton } from '@/components/Button'
 import { CONFIG_PATH } from '@/constants/easytier'
 import * as toml from 'smol-toml'
-import { useEasyTierStore } from '@/store/modules/easytire'
+import { useEasyTierStore } from '@/store/modules/easytier'
 import path from 'path'
 import {
   deleteFile,
@@ -25,11 +25,11 @@ import {
 // import MonacoEditor from '@/components/monaco-editor/index.vue'
 const MonacoEditor = () => import('@/components/monaco-editor/index.vue')
 const { t } = useI18n()
-const easyTireStore = useEasyTierStore()
+const easyTierStore = useEasyTierStore()
 const { tableRegister, tableState, tableMethods } = useTable({
   fetchDataApi: async () => {
     // const res = await getConfigList()
-    const res = easyTireStore.configList
+    const res = easyTierStore.configList
     return {
       list: res || [],
       total: res.length || 0
@@ -237,7 +237,7 @@ watch(
 )
 const getConfigList = async () => {
   const fileList = await getFilesByExtension('config', '.toml')
-  easyTireStore.setFileList(fileList)
+  easyTierStore.setFileList(fileList)
   let tmpList: any = []
   let tmpList2: any = []
   fileList.forEach((f: string) => {
@@ -245,8 +245,8 @@ const getConfigList = async () => {
     tmpList.push({ network_name: fileName })
     tmpList2.push(fileName)
   })
-  easyTireStore.setConfigList(tmpList)
-  easyTireStore.setFileListNoSuffix(tmpList2)
+  easyTierStore.setConfigList(tmpList)
+  easyTierStore.setFileListNoSuffix(tmpList2)
   await getList()
   return tmpList
 }
