@@ -614,8 +614,18 @@ export default {
     delNetConfig: 'Delete network configuration',
     reloadNetConfig: 'Reload network configuration',
     corePath: 'Core path',
+    coreVersion: 'Core Version',
+    appVersion: 'App Version',
     copyCorePath: 'Copy Path',
+    startDownload: 'Start Success!',
+    installCore: 'Install Core',
     downLoadCore: 'DownLoad Core',
-    coreEror: 'Core Kernel does not exist or has no executable permission！'
+    downLoadSuccess: 'DownLoad Success!',
+    downLoadError: 'DownLoad Error!',
+    coreEror: 'Core Kernel does not exist or has no executable permission！',
+    logPath: 'Log Path',
+    openLogPath: 'Open Log Path',
+    openCorePath: 'Open Core Path',
+    copyLogPath: 'Copy Log Path'
   }
 }

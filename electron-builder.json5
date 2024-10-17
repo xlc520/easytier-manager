@@ -2,11 +2,11 @@
  * @see https://www.electron.build/configuration/
  */
 {
-  "appId": "easytier",
+  "appId": "easytier-manager",
   // 应用程序名称
   //  "name": "",
   // 产品名称
-  "productName": "easytier",
+  "productName": "easytier-manager",
   // 工件文件名
   //  "artifactName": "",
   //内部版本号
@@ -19,7 +19,7 @@
   "asar": true,
   // normal
   // "compression": "store",
-  "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+  "artifactName": "${productName}-${os}-${arch}_${version}.${ext}",
   "directories": {
     "output": "release/${version}"
   },
@@ -44,8 +44,15 @@
       {
         "target": "nsis",
         "arch": [
-          //          "ia32",
-          "x64"
+          "x64",
+          "ia32"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "x64",
+          "ia32"
         ]
       }
     ]
@@ -59,6 +66,7 @@
     "gatekeeperAssess": true,
   },
   "linux": {
+    "category": "Utility",
     "target": [
       "deb",
       "tar.gz",

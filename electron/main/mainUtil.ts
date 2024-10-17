@@ -70,7 +70,7 @@ export const deleteFile = async (filePath: string) => {
     await fs.access(dataPath)
     // 如果文件存在，删除它
     await fs.unlink(dataPath)
-    console.log(`文件 ${dataPath} 已成功删除`)
+    console.debug(`文件 ${dataPath} 已成功删除`)
   } catch (error) {
     console.error(`删除文件 ${dataPath} 时出错:`, error)
   }
@@ -102,6 +102,10 @@ export const getFilesByExtension = async (dirPath: string, extension: string = '
     }
     return filteredFiles
   } catch (error) {
+    if (error.toString().includes('no such file')) {
+      console.debug(`获取文件列表时出错: ${error}`)
+      return []
+    }
     console.error(`获取文件列表时出错: ${error}`)
     return []
   }
@@ -219,28 +223,88 @@ export const killProcess = (pid) => {
   })
 }
 
-export const exeExist = (path: string) => {
-  return new Promise((resolve, reject) => {
-    exec(path, (error) => {
-      if (error) {
+export const execCli = async (cmd: string) => {
+  return new Promise(async (resolve) => {
+    try {
+      const binPath = path.join(userDataPath, 'bin', 'easytier-cli')
+      const command = binPath + ' ' + cmd
+      // 检查是否有执行文件
+      const exist = await exeExist(binPath + ' -V')
+      if (!exist) {
+        console.error('easytier-cli不存在或无可执行权限')
         resolve(false)
-      } else {
-        resolve(true)
+        return
       }
-    })
+      console.log('执行命令:', command)
+      exec(command, (error, stdout) => {
+        if (error) {
+          resolve(false)
+          return
+        }
+        const res = stdout.trim()
+        console.debug('执行结果:\n', res)
+        resolve(res)
+      })
+    } catch (e) {
+      console.error('执行exec出错', e)
+      resolve(false)
+    }
+  })
+}
+
+export const exeCmd = async (execPath: string) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const dirPath = path.dirname(execPath)
+      await fs.access(dirPath)
+      exec(execPath, (error, stdout) => {
+        if (error) {
+          console.error('执行出错:', error.message)
+          resolve(false)
+        } else {
+          resolve(stdout)
+        }
+      })
+    } catch (e) {
+      console.error('执行出错:', e)
+      resolve(false)
+    }
+  })
+}
+
+export const exeExist = (execPath: string) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const dirPath = path.dirname(execPath)
+      fs.access(dirPath).catch(() => {
+        resolve(false)
+        return
+      })
+      exec(execPath, (error) => {
+        if (error) {
+          resolve(false)
+        } else {
+          resolve(true)
+        }
+      })
+    } catch (e) {
+      resolve(false)
+    }
   })
 }
 
 export const runChildEasyTier = async (param: string = 'config.toml') => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const binPath = path.join(userDataPath, 'bin', 'easytier-core')
       const confiPath = path.join(userDataPath, 'config', param)
       const args = ['-c', confiPath]
       // 检查是否有执行文件
-      if (!exeExist(binPath + ' -V')) {
+      const exist = await exeExist(binPath + ' -V')
+      if (!exist) {
         console.error('easytier-core不存在或无可执行权限')
         reject(false)
+        return
       }
       console.log('开始启动,命令:', binPath, args[0], args[1])
       // 使用 spawn 创建子进程
@@ -250,32 +314,10 @@ export const runChildEasyTier = async (param: string = 'config.toml') => {
       })
       // 使子进程独立运行
       childProcess.unref()
-      console.log('启动成功')
       resolve(true)
     } catch (e) {
       console.error('spawn启动错误', e)
       reject(e)
-    }
-  })
-}
-
-export const execCli = async (cmd: string) => {
-  return new Promise((resolve) => {
-    try {
-      const binPath = path.join(userDataPath, 'bin', 'easytier-cli')
-      const command = binPath + ' ' + cmd
-      console.log('执行命令:', command)
-      exec(command, (error, stdout) => {
-        if (error) {
-          resolve(false)
-        }
-        const res = stdout.trim()
-        console.debug('执行结果:\n', res)
-        resolve(res)
-      })
-    } catch (e) {
-      console.error('执行exec出错', e)
-      resolve(false)
     }
   })
 }
@@ -296,7 +338,8 @@ export const getSysInfo = async () => {
 
 export const download = async (event, url: string, targetPath: string) => {
   try {
-    const savePath = path.join(userDataPath, targetPath)
+    const savePath = path.join(userDataPath, 'bin', targetPath)
+    await ensureDirectoryExists(savePath)
     const response = await axios({
       url,
       method: 'GET',
@@ -307,42 +350,45 @@ export const download = async (event, url: string, targetPath: string) => {
     response.data.pipe(writer)
 
     writer.on('finish', () => {
-      event.reply('download-complete', savePath)
+      event.reply('download-complete', true)
     })
 
     writer.on('error', (err) => {
-      console.log('download-error', err)
+      console.error('下载出错', err.message)
       event.reply('download-error', err.message)
     })
   } catch (err) {
-    console.log('download-error2', err)
-    event.reply('download-error', err.message)
+    console.error('下载出错', err)
+    event.reply('download-error', err)
   }
 }
 
-export const extractZip = async (event, zipPath, targetDir) => {
-  try {
-    const zip = new AdmZip(zipPath)
-    const zipEntries = zip.getEntries()
-
-    zipEntries.forEach((entry) => {
-      if (entry.isDirectory) {
-        // 如果是目录，创建目录
-        const dirPath = path.join(targetDir, entry.entryName)
-        if (!fs.existsSync(dirPath)) {
-          fs.mkdirSync(dirPath, { recursive: true })
+export const extractZip = async (event, fileName, targetDir) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const zipPath = path.join(userDataPath, 'bin', fileName)
+      targetDir = path.join(userDataPath, targetDir)
+      const zip = new AdmZip(zipPath)
+      const zipEntries = zip.getEntries()
+      zipEntries.forEach((entry) => {
+        if (entry.isDirectory) {
+          // 如果是目录，创建目录
+          const dirPath = path.join(targetDir, entry.entryName)
+          if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true })
+          }
+        } else {
+          // 如果是文件，解压文件
+          const filePath = path.join(targetDir, entry.entryName)
+          zip.extractEntryTo(entry, targetDir, false, true)
         }
-      } else {
-        // 如果是文件，解压文件
-        const filePath = path.join(targetDir, entry.entryName)
-        zip.extractEntryTo(entry, targetDir, false, true)
-      }
-    })
-
-    event.reply('extract-complete', targetDir)
-  } catch (err) {
-    event.reply('extract-error', err.message)
-  }
+      })
+      resolve(true)
+    } catch (err) {
+      console.error('解压失败', err)
+      reject(false)
+    }
+  })
 }
 
 export const unZipFile = (src: string, dest: string, callBack: (_?: any) => void) => {

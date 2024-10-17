@@ -604,9 +604,19 @@ export default {
     delNetConfig: '删除组网配置',
     reloadNetConfig: '重载组网配置',
     corePath: '内核路径',
+    coreVersion: '内核版本',
+    appVersion: '软件版本',
     checkCorePath: '检测内核是否存在',
     copyCorePath: '复制内核目录',
-    downLoadCore: '下载内核',
-    coreEror: '内核不存在或无可执行权限！'
+    startDownload: '开始下载',
+    installCore: '安装内核',
+    downLoadCore: '内核下载',
+    downLoadSuccess: '下载成功!',
+    downLoadError: '下载失败!',
+    coreEror: '内核不存在或无可执行权限！',
+    logPath: '日志目录',
+    openLogPath: '打开日志目录',
+    openCorePath: '打开内核目录',
+    copyLogPath: '复制日志目录'
   }
 }

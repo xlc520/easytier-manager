@@ -14,6 +14,7 @@ import { BaseButton } from '@/components/Button'
 import { CONFIG_PATH } from '@/constants/easytier'
 import * as toml from 'smol-toml'
 import { useEasyTierStore } from '@/store/modules/easytier'
+import log from '@/utils/logger'
 import path from 'path'
 import {
   deleteFile,
@@ -285,7 +286,7 @@ const addConfigAction = async () => {
     //   saveLoading.value = true
     //   try {
     //   } catch (error) {
-    //     console.log(error)
+    //     log.log(error)
     //   } finally {
     //     saveLoading.value = false
     //     dialogVisible.value = false
@@ -302,7 +303,7 @@ const addConfigAction = async () => {
       await writeFile(CONFIG_PATH + '/' + networkName + '.toml', toml.stringify(parseValue))
       ElMessage.success(t('common.accessSuccess'))
     } catch (error) {
-      console.error('Error writing file:', error)
+      log.error('Error writing file:', error)
     } finally {
       dialogVisible.value = false
     }
@@ -317,7 +318,7 @@ const saveConfigAction = async () => {
       saveLoading.value = true
       try {
       } catch (error) {
-        console.log(error)
+        log.log(error)
       } finally {
         saveLoading.value = false
         dialogVisible.value = false
@@ -329,14 +330,14 @@ const saveConfigAction = async () => {
     const parseValue: EasyTierConfig = toml.parse(dataConfig.value)
     let networkName = parseValue.network_identity?.network_name
     await writeFile(CONFIG_PATH + '/' + networkName + '.toml', toml.stringify(parseValue))
-    console.log('保存的代码', dataConfig.value)
+    log.log('保存的代码', dataConfig.value)
     ElMessage.success(t('common.accessSuccess'))
     dialogVisible.value = false
   }
   await getConfigList()
 }
 const delConfig = async (row?) => {
-  console.log('删除', row)
+  log.log('删除', row)
   ElMessageBox.confirm(t('common.delMessage'), t('common.delWarning'), {
     confirmButtonText: t('common.delOk'),
     cancelButtonText: t('common.delCancel'),

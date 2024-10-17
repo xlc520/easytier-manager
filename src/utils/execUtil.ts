@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron'
+import log from '@/utils/logger'
 
 export const getSysInfo = async () => {
   try {
@@ -11,7 +12,7 @@ export const getSysInfo = async () => {
     }
     return sysInfo
   } catch (error) {
-    console.error('获取系统信息失败:', error)
+    log.error('获取系统信息失败:', error)
   }
 }
 
@@ -19,7 +20,15 @@ export const execCli = async (cmd: string) => {
   try {
     return await ipcRenderer.invoke('execCli', cmd)
   } catch (error) {
-    console.error('异常:', error)
+    log.error('异常:', error)
+  }
+}
+
+export const exeCmd = async (cmd: string) => {
+  try {
+    return await ipcRenderer.invoke('exeCmd', cmd)
+  } catch (error) {
+    log.error('异常:', error)
   }
 }
 
@@ -27,7 +36,7 @@ export const exeExist = async (cmd: string) => {
   try {
     return await ipcRenderer.invoke('exeExist', cmd)
   } catch (error) {
-    console.error('读取进程异常:', error)
+    log.error('读取进程异常:', error)
   }
 }
 
@@ -35,7 +44,7 @@ export const runChildEasyTier = async (param: string) => {
   try {
     return await ipcRenderer.invoke('runChildEasyTier', param)
   } catch (error) {
-    console.error('启动EasyTier异常:', error)
+    log.error('启动EasyTier异常:', error)
   }
 }
 
@@ -43,7 +52,7 @@ export const getRunningProcesses = async (programName: string) => {
   try {
     return await ipcRenderer.invoke('getRunningProcesses', programName)
   } catch (error) {
-    console.error('读取进程异常:', error)
+    log.error('读取进程异常:', error)
   }
 }
 
@@ -51,7 +60,15 @@ export const killProcess = async (pid: any) => {
   try {
     return await ipcRenderer.invoke('killProcess', pid)
   } catch (error) {
-    console.error('读取进程异常:', error)
+    log.error('读取进程异常:', error)
+  }
+}
+
+export const getVersion = async () => {
+  try {
+    return await ipcRenderer.invoke('getVersion')
+  } catch (error) {
+    log.error('获取版本异常:', error)
   }
 }
 

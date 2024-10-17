@@ -3,7 +3,7 @@ import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { Table } from '@/components/Table'
 import { onBeforeMount, reactive, ref, unref, watch } from 'vue'
-import { ElMessage, ElOption, ElOptionGroup, ElSelect, ElTree } from 'element-plus'
+import { ElMessage, ElMessageBox, ElOption, ElOptionGroup, ElSelect, ElTree } from 'element-plus'
 import { deleteUserByIdApi } from '@/api/department'
 import { useTable } from '@/hooks/web/useTable'
 import Write from './components/Write.vue'
@@ -25,6 +25,7 @@ import {
 } from '@/utils/execUtil'
 import { parseNodeInfo, parsePeerInfo } from '@/utils/easyTierUtil'
 import { Descriptions, DescriptionsSchema } from '@/components/Descriptions'
+import log from '@/utils/logger'
 
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
@@ -131,7 +132,7 @@ onBeforeMount(async () => {
     getNodeInfo()
     getPeerInfo()
   } catch (e) {
-    console.error('获取配置异常', e)
+    log.debug('获取配置异常', e)
   }
 })
 
@@ -207,20 +208,39 @@ const getPeerInfo = async () => {
 }
 
 const startAction = async () => {
-  console.log('开始运行配置:', currentNodeKey.value)
-  await runChildEasyTier(currentNodeKey.value + '.toml').then(() => {
-    stopDisabled.value = false
-    easyTierStore.setStopLoop(false)
-    getNodeInfo()
-    getPeerInfo()
-    descriptionCollapse.value = true
-  })
+  log.log('开始运行配置:', currentNodeKey.value)
+  await runChildEasyTier(currentNodeKey.value + '.toml')
+    .then((res) => {
+      if (!res) {
+        ElMessageBox({
+          title: '哦豁，出错啦',
+          message: '运行当前配置出错，请在 设置 检查是否有核心程序，或核心程序是否有可执行权限',
+          type: 'error',
+          draggable: true,
+          confirmButtonText: t('common.ok')
+        })
+        return
+      }
+      stopDisabled.value = false
+      easyTierStore.setStopLoop(false)
+      getNodeInfo()
+      getPeerInfo()
+      descriptionCollapse.value = true
+    })
+    .catch(() => {
+      ElMessageBox({
+        title: '哦豁，出错啦',
+        message: '运行当前配置出错，请在设置检查是否有核心程序，或核心程序是否有可执行权限',
+        type: 'error',
+        draggable: true,
+        confirmButtonText: t('common.ok')
+      })
+    })
 }
 const stopAction = async () => {
-  console.log('停止运行配置:', currentNodeKey.value)
+  log.log('停止运行配置:', currentNodeKey.value)
   const processes = await getRunningProcesses('easytier-core')
   if (processes && processes.length > 0) {
-    console.log('processes', processes)
     const { commandLine, pid } = processes.find((value: any) =>
       value.commandLine?.includes(currentNodeKey.value)
     )
@@ -245,7 +265,7 @@ const saveConfigAction = async () => {
     saveLoading.value = true
     try {
     } catch (error) {
-      console.log(error)
+      log.log(error)
     } finally {
       saveLoading.value = false
       dialogVisible.value = false
@@ -254,7 +274,7 @@ const saveConfigAction = async () => {
 }
 const updateDataConfig = (val: string) => {
   //val:子组件实时传过来的值
-  console.log(val)
+  log.debug(val)
 }
 </script>
 

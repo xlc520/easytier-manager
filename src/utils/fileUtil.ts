@@ -1,11 +1,13 @@
 // fileUtil.js
 import { ipcRenderer } from 'electron'
+import { GITHUB_DOWN_URL, GITHUB_EASYTIER } from '@/constants/easytier'
+import log from '@/utils/logger'
 
 export const readFile = async (filePath: string) => {
   try {
     return await ipcRenderer.invoke('read-file', filePath)
   } catch (error) {
-    console.error('Error reading file:', error)
+    log.error('Error reading file:', error)
   }
 }
 
@@ -13,7 +15,7 @@ export const writeFile = async (filePath: string, content: any) => {
   try {
     await ipcRenderer.invoke('write-file', filePath, content)
   } catch (error) {
-    console.error('Error writing file:', error)
+    log.error('Error writing file:', error)
   }
 }
 
@@ -21,7 +23,7 @@ export const deleteFile = async (filePath: string) => {
   try {
     await ipcRenderer.invoke('deleteFile', filePath)
   } catch (error) {
-    console.error('Error delete file:', error)
+    log.error('Error delete file:', error)
   }
 }
 
@@ -35,7 +37,7 @@ export const getFilesByExtension = async (dirPath: string, extension: string) =>
   try {
     return await ipcRenderer.invoke('getFilesByExtension', dirPath, extension)
   } catch (error) {
-    console.error('Error reading:', error)
+    log.error('Error reading:', error)
   }
 }
 
@@ -44,7 +46,7 @@ export const getUserDataPath = async () => {
   try {
     return await ipcRenderer.invoke('getUserDataPath')
   } catch (error) {
-    console.error('Error :', error)
+    log.error('Error :', error)
   }
 }
 
@@ -58,7 +60,7 @@ export const getAppDataPath = async () => {
   try {
     return await ipcRenderer.invoke('getAppDataPath')
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error:', error)
   }
 }
 
@@ -66,7 +68,7 @@ export const download = async (url: string, savePath: string) => {
   try {
     await ipcRenderer.send('download', url, savePath)
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error:', error)
   }
 }
 
@@ -74,7 +76,7 @@ export const downloadComplete = async (callback) => {
   try {
     await ipcRenderer.on('download-complete', callback)
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error:', error)
   }
 }
 
@@ -82,6 +84,27 @@ export const downloadError = async (callback) => {
   try {
     return await ipcRenderer.on('download-error', callback)
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error:', error)
+  }
+}
+
+export const downloadEasyTier = async (fileName: string, mirrorUrl: string) => {
+  try {
+    let url = GITHUB_EASYTIER + GITHUB_DOWN_URL + fileName
+    if (mirrorUrl) {
+      url = mirrorUrl + '/' + url
+    }
+    log.log('下载URL:', url)
+    await download(url, fileName)
+  } catch (error) {
+    log.error('Error:', error)
+  }
+}
+
+export const extractZip = async (fileName: string, targetDir: string) => {
+  try {
+    return await ipcRenderer.invoke('extractZip', fileName, targetDir)
+  } catch (error) {
+    log.error('Error:', error)
   }
 }

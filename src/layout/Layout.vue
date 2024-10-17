@@ -2,9 +2,9 @@
 import { computed, defineComponent, unref } from 'vue'
 import { useAppStore } from '@/store/modules/app'
 import { Backtop } from '@/components/Backtop'
-import { Setting } from '@/components/Setting'
 import { useRenderLayout } from './components/useRenderLayout'
 import { useDesign } from '@/hooks/web/useDesign'
+// import { Setting } from '@/components/Setting'
 
 const { getPrefixCls } = useDesign()
 
@@ -58,12 +58,11 @@ export default defineComponent({
         {renderLayout()}
 
         <Backtop></Backtop>
-
-        <Setting></Setting>
       </section>
     )
   }
 })
+// <Setting></Setting> 右边设置图标，放在</section>的上面
 </script>
 
 <style lang="less" scoped>
@@ -71,6 +70,7 @@ export default defineComponent({
 
 .@{prefix-cls} {
   background-color: var(--app-content-bg-color);
+
   .@{prefix-cls}-content-scrollbar {
     & > :deep(.el-scrollbar__wrap) {
       & > .@{elNamespace}-scrollbar__view {

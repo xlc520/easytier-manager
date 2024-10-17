@@ -1,30 +1,31 @@
 <script setup lang="tsx">
+import path from 'path'
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { onMounted, reactive, ref, unref } from 'vue'
-import { ElMessage } from 'element-plus'
-import _ from 'lodash'
-import { exeExist, getSysInfo } from '@/utils/execUtil'
-import { coreUrl } from '@/constants/easytier'
-// import { getGithubVer } from '@/api/easytier'
-import { download, downloadComplete, downloadError, getUserDataPath } from '@/utils/fileUtil'
-import path from 'path'
-import { CircleCheck, Download, Folder } from '@element-plus/icons-vue'
+import { ElInput, ElMessage } from 'element-plus'
+import { EASYTIER_NAME, GITHUB_MIRROR_URL } from '@/constants/easytier'
+import { CircleCheck, Download, Folder, InfoFilled } from '@element-plus/icons-vue'
 import { useClipboard } from '@vueuse/core'
+import { execCli, getSysInfo, getVersion } from '@/utils/execUtil'
+import { downloadEasyTier, extractZip, getUserDataPath } from '@/utils/fileUtil'
+import { ipcRenderer } from 'electron'
+import _ from 'lodash'
+import log from '@/utils/logger'
+// import { getGithubVer } from '@/api/easytier'
 
 const { t } = useI18n()
 
-interface SysInfo {
-  osType: string
-  osArch: string
-  osVersion: string
-}
-
 const sysInfo = ref<SysInfo>({ osArch: '', osType: '', osVersion: '' })
 const userDataPath = ref('')
+const fileName = ref('')
+const downLoadSuccess = ref(false)
 const checkCorePathSuccess = ref(false)
 const form = reactive({
-  corePath: ''
+  corePath: '',
+  coreVersion: '',
+  logPath: '',
+  appVersion: ''
 })
 
 const verSelect = ref<string>('2.0.3')
@@ -38,47 +39,58 @@ const verOptions = [
     label: '2.0.4'
   },
   {
+    value: '2.0.5',
+    label: '2.0.5'
+  },
+  {
+    value: '2.1.0',
+    label: '2.1.0'
+  },
+  {
     value: '1.2.3',
     label: '1.2.3'
   }
 ]
+const mirrorUrlSelect = ref<string>('')
 
 // const getDownloadUrl = async () => {
 //   const response = await getGithubVer()
-//   console.log('response', response)
+//   log.log('response', response)
 //   // const winUrlTemplate = _.template(coreUrl)
 //   // const downUrl = winUrlTemplate({
 //   //   osType: sysInfo.value.osType,
 //   //   osArch: sysInfo.value.osArch,
 //   //   version: res.tag_name
 //   // })
-//   // console.log('下载URL:', downUrl)
+//   // log.log('下载URL:', downUrl)
 //   // return downUrl
 // }
 const downLoadCore = async () => {
-  // const url = getDownloadUrl()
+  ElMessage.info(t('easytier.startDownload'))
   // 尝试官方链接
-  const winUrlTemplate = _.template(coreUrl)
-  // easytier-windows-x86_64-v2.0.3.zip
-  // easytier-win32-x64-v2.0.3.zip
-  const downUrl = winUrlTemplate({
-    osType: sysInfo.value.osType,
-    osArch: sysInfo.value.osArch,
-    version: 'v' + verSelect.value
-  })
-  console.log('下载URL:', downUrl)
-  await download('https://csdnimg.cn/release/blogv2/dist/pc/img/original.png', 'bin')
-  await downloadComplete((res) => {
-    console.log('下载res', res)
-  })
-  await downloadError((err) => {
-    console.log('下载err', err)
-  })
-  // 尝试加速链接
+  for (const mirror of GITHUB_MIRROR_URL) {
+    if (downLoadSuccess.value) {
+      return
+    }
+    ElMessage.info('开始使用加速源下载:' + mirror.value)
+    await downloadEasyTier(fileName.value, mirror.value)
+    if (mirror.value == GITHUB_MIRROR_URL[-1].value) {
+      log.error('所有加速都下载失败，请手动下载替换或者魔法！')
+      ElMessage.error('所有加速都下载失败，请手动下载替换或者魔法！')
+    }
+  }
+}
+const installCore = async () => {
+  const res = await extractZip(fileName.value, 'bin')
+  if (res) {
+    ElMessage.success(t('common.accessSuccess'))
+  }
+  ElMessage.error(t('error.networkError'))
 }
 const checkCorePath = async () => {
-  const exist = await exeExist(form.corePath + ' -V')
-  if (exist) {
+  const ver = await execCli('-V')
+  if (ver) {
+    form.coreVersion = ver
     checkCorePathSuccess.value = true
   } else {
     ElMessage.error({ message: t('easytier.coreEror'), duration: 4000 })
@@ -99,10 +111,53 @@ const copyCorePath = async () => {
     }
   }
 }
+const openCorePath = async () => {
+  const { shell } = require('electron')
+  await shell.openPath(path.join(userDataPath.value))
+}
+const copyLogPath = async () => {
+  // 拷贝
+  const { copy, copied, isSupported } = useClipboard({
+    source: path.join(userDataPath.value, 'log'),
+    legacy: true
+  })
+  if (!isSupported) {
+    ElMessage.error(t('setting.copyFailed'))
+  } else {
+    await copy()
+    if (unref(copied)) {
+      ElMessage.success(t('setting.copySuccess'))
+    }
+  }
+}
+const openLogPath = async () => {
+  const { shell } = require('electron')
+  await shell.openPath(path.join(userDataPath.value, 'log'))
+}
 onMounted(async () => {
   sysInfo.value = await getSysInfo()
   userDataPath.value = await getUserDataPath()
-  form.corePath = path.join(userDataPath.value, 'bin', 'easytier-core')
+  const ver = await execCli('-V')
+  if (ver) {
+    form.coreVersion = ver
+  }
+  form.corePath = path.join(userDataPath.value, 'bin')
+  form.appVersion = await getVersion()
+  const winUrlTemplate = _.template(EASYTIER_NAME)
+  // easytier-windows-x86_64-v2.0.3.zip
+  // easytier-win32-x64-v2.0.3.zip
+  fileName.value = winUrlTemplate({
+    osType: sysInfo.value.osType,
+    osArch: sysInfo.value.osArch,
+    version: 'v' + verSelect.value
+  })
+  ipcRenderer.on('download-complete', () => {
+    downLoadSuccess.value = true
+    ElMessage.success(t('easytier.downLoadSuccess'))
+  })
+  ipcRenderer.on('download-error', () => {
+    ElMessage.error(t('easytier.downLoadError'))
+  })
 })
 </script>
 
@@ -110,6 +165,17 @@ onMounted(async () => {
   <div class="flex w-100% h-100%">
     <ContentWrap class="flex-[3] ml-10px" :title="t('common.setting')">
       <el-descriptions class="margin-top" :column="1" border>
+        <el-descriptions-item>
+          <template #label>
+            <div class="cell-item">
+              <el-icon size="16px">
+                <InfoFilled />
+              </el-icon>
+              {{ t('easytier.coreVersion') }}
+            </div>
+          </template>
+          {{ form.coreVersion }}
+        </el-descriptions-item>
         <el-descriptions-item>
           <template #label>
             <div class="cell-item">
@@ -123,8 +189,12 @@ onMounted(async () => {
           <el-icon v-if="checkCorePathSuccess" color="#67C23A" size="16px">
             <CircleCheck />
           </el-icon>
-          <el-button class="ml-5" type="primary" @click="checkCorePath"
+          <br />
+          <el-button type="warning" @click="checkCorePath"
             >{{ t('easytier.checkCorePath') }}
+          </el-button>
+          <el-button type="primary" @click="openCorePath"
+            >{{ t('easytier.openCorePath') }}
           </el-button>
           <el-button type="info" @click="copyCorePath">{{ t('easytier.copyCorePath') }}</el-button>
         </el-descriptions-item>
@@ -138,7 +208,7 @@ onMounted(async () => {
               {{ t('easytier.downLoadCore') }}
             </div>
           </template>
-          请先检测内核是否已存在再下载，选择版本时可以手动输入
+          请先检测内核是否已存在再下载；选择版本时可以手动输入；默认随机加速链接 <br />
           <el-select
             v-model="verSelect"
             filterable
@@ -155,9 +225,46 @@ onMounted(async () => {
               :value="item.value"
             />
           </el-select>
-          <el-button class="ml-5" type="primary" @click="downLoadCore"
+          <el-input
+            type="text"
+            placeholder="Github加速链接,例如:https://ghproxy.cn"
+            v-model="mirrorUrlSelect"
+            style="width: 60%; margin-left: 3px"
+            clearable
+          />
+          <br />
+          <el-button class="mt-2" type="primary" @click="downLoadCore"
             >{{ t('easytier.rx_bytes') }}
           </el-button>
+          <el-button class="mt-2" type="primary" @click="installCore"
+            >{{ t('easytier.installCore') }}
+          </el-button>
+        </el-descriptions-item>
+
+        <el-descriptions-item>
+          <template #label>
+            <div class="cell-item">
+              <el-icon size="16px">
+                <Folder />
+              </el-icon>
+              {{ t('easytier.logPath') }}
+            </div>
+          </template>
+          {{ form.logPath }}
+          <el-button type="primary" @click="openLogPath">{{ t('easytier.openLogPath') }}</el-button>
+          <el-button type="info" @click="copyLogPath">{{ t('easytier.copyLogPath') }}</el-button>
+        </el-descriptions-item>
+
+        <el-descriptions-item>
+          <template #label>
+            <div class="cell-item">
+              <el-icon size="16px">
+                <InfoFilled />
+              </el-icon>
+              {{ t('easytier.appVersion') }}
+            </div>
+          </template>
+          {{ form.appVersion }}
         </el-descriptions-item>
       </el-descriptions>
     </ContentWrap>
@@ -168,6 +275,6 @@ onMounted(async () => {
 .cell-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 5px;
 }
 </style>

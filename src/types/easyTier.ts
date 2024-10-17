@@ -80,3 +80,18 @@ interface EasyTierConfig {
   flags_struct: Flags
   stun_server: string[]
 }
+
+interface SysInfo {
+  osType: string
+  osArch: string
+  osVersion: string
+}
+
+interface GithubVer {
+  id: number
+  tag_name: string
+  name: string
+  prerelease: boolean
+  created_at: string
+  published_at: string
+}

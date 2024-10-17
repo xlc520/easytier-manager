@@ -1,6 +1,6 @@
 import request from '@/axios'
-import { coreInfoApi } from '@/constants/easytier'
+import { CORE_INFO_API } from '@/constants/easytier'
 
 export const getGithubVer = async () => {
-  return request.get<GithubVer>({ url: coreInfoApi })
+  return request.get<GithubVer>({ url: CORE_INFO_API })
 }
