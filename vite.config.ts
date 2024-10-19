@@ -46,21 +46,27 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
             Components({
                 resolvers: [ElementPlusResolver()],
             }),
-            createStyleImportPlugin({
-                resolves: [ElementPlusResolve()],
-                libs: [{
-                    libraryName: 'element-plus',
-                    esModule: true,
-                    resolveStyle: (name) => {
-                        if (name === 'click-outside') {
-                            return ''
+            env.VITE_USE_ALL_ELEMENT_PLUS_STYLE === 'false'
+                ? createStyleImportPlugin({
+                    resolves: [ElementPlusResolve()],
+                    libs: [
+                        {
+                            libraryName: 'element-plus',
+                            esModule: true,
+                            resolveStyle: (name) => {
+                                if (name === 'click-outside') {
+                                    return ''
+                                }
+                                return `element-plus/es/components/${name.replace(/^el-/, '')}/style/css`
+                            }
                         }
-                        return `element-plus/es/components/${name.replace(/^el-/, '')}/style/css`
-                    }
-                }]
-            }),
+                    ]
+                })
+                : undefined,
             EslintPlugin({
                 cache: false,
+                failOnWarning: false,
+                failOnError: false,
                 include: ['src/**/*.vue', 'src/**/*.ts', 'src/**/*.tsx'] // 检查的文件
             }),
             VueI18nPlugin({
@@ -74,20 +80,6 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
                 svgoOptions: true
             }),
             PurgeIcons(),
-            // env.VITE_USE_MOCK === 'true'
-            //   ? viteMockServe({
-            //       ignore: /^\_/,
-            //       mockPath: 'mock',
-            //       localEnabled: !isBuild,
-            //       prodEnabled: isBuild,
-            //       injectCode: `
-            //     import { setupProdMockServer } from '../mock/_createProductionServer'
-            //
-            //     setupProdMockServer()
-            //     `
-            //     })
-            //   : undefined,
-
             ViteEjsPlugin({
                 title: env.VITE_APP_TITLE
             }),
@@ -166,6 +158,10 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
                 }
             ]
         },
+        esbuild: {
+            pure: env.VITE_DROP_CONSOLE === 'true' ? ['console.log'] : undefined,
+            drop: env.VITE_DROP_DEBUGGER === 'true' ? ['debugger'] : undefined
+        },
         build: {
             target: 'es2015',
             minify: 'terser',
@@ -184,7 +180,8 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
                     }
                 }
             },
-            cssCodeSplit: !(env.VITE_USE_CSS_SPLIT === 'false')
+            cssCodeSplit: !(env.VITE_USE_CSS_SPLIT === 'false'),
+            cssTarget: ['chrome31']
         },
         server: {
             port: 4000,

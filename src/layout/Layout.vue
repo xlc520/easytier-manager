@@ -4,7 +4,7 @@ import { useAppStore } from '@/store/modules/app'
 import { Backtop } from '@/components/Backtop'
 import { useRenderLayout } from './components/useRenderLayout'
 import { useDesign } from '@/hooks/web/useDesign'
-// import { Setting } from '@/components/Setting'
+import { Setting } from '@/components/Setting'
 
 const { getPrefixCls } = useDesign()
 
@@ -19,6 +19,8 @@ const mobile = computed(() => appStore.getMobile)
 const collapse = computed(() => appStore.getCollapse)
 
 const layout = computed(() => appStore.getLayout)
+
+const hideSetting = computed(() => import.meta.env.VITE_HIDE_GLOBAL_SETTING === 'true')
 
 const handleClickOutside = () => {
   appStore.setCollapse(true)
@@ -58,6 +60,8 @@ export default defineComponent({
         {renderLayout()}
 
         <Backtop></Backtop>
+
+        {unref(hideSetting) ? <span /> : <Setting></Setting>}
       </section>
     )
   }

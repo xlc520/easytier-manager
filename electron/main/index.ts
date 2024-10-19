@@ -9,11 +9,12 @@
 // │ └── index.html    > Electron-Renderer
 //
 
-import { app, BrowserWindow, ipcMain, shell, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, Menu, nativeImage, Tray } from 'electron'
 import { release } from 'os'
 import path, { join } from 'path'
 import * as mainUtil from './mainUtil'
 import log from './logger'
+import { ContextMenu as contextMenu } from '../../src/components/ContextMenu'
 
 process.env.DIST_ELECTRON = join(__dirname, '..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist')
@@ -38,19 +39,21 @@ if (!app.requestSingleInstanceLock()) {
 // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
 let win: BrowserWindow | null = null
+let tray: Tray | null = null
 // Here, you can also use other preload
 const preload = join(__dirname, '../preload/index.js')
 const url = process.env.VITE_DEV_SERVER_URL
 const indexHtml = join(process.env.DIST, 'index.html')
 
-async function createWindow() {
+const createWindow = async () => {
   win = new BrowserWindow({
     title: 'EasyTier 管理器',
-    icon: join(process.env.PUBLIC, 'favicon.ico'),
-    width: 950,
+    icon: join(process.env.PUBLIC, 'logo.png'),
+    width: 1024,
     height: 700,
     webPreferences: {
       preload,
+      nodeIntegrationInWorker: true, //使用Node.js的特性,多线程的Node.js
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
@@ -59,7 +62,7 @@ async function createWindow() {
       contextIsolation: false, // 禁用上下文隔离（可选，但通常与 nodeIntegration 一起使用）
       webSecurity: false, // 禁用web安全策略
       // enableRemoteModule: true, // 启用 remote 模块（可选，但通常与 nodeIntegration 一起使用）
-      // sandbox: false, // 开启沙盒则preload脚本被禁用，所以得设为false
+      sandbox: false, // 开启沙盒则preload脚本被禁用，所以得设为false
       /** 是否启用 DevTools 仅在开发环境可用 */
       devTools: !app.isPackaged
     },
@@ -90,11 +93,62 @@ async function createWindow() {
     if (url.startsWith('http:')) shell.openExternal(url)
     return { action: 'deny' }
   })
+  win.on('close', (e) => {
+    console.log(win.isFocused())
+    if (!win.isFocused()) {
+      win = null
+    } else {
+      e.preventDefault() /*阻止应用退出*/
+      win.hide() /*隐藏当前窗口*/
+    }
+  })
+
+  // 系统通知的应用包名
+  app.setAppUserModelId(win.title)
+
   log.info('\n\n')
   log.info(win.title + ' 启动成功！')
 }
 
-app.whenReady().then(createWindow)
+const initTray = async () => {
+  const icon = nativeImage.createFromPath(join(process.env.PUBLIC, 'logo.png'))
+  tray = new Tray(icon)
+  // 上下文菜单
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: '打开面板',
+      click: () => {
+        win.show()
+      }
+    },
+    {
+      label: '退出',
+      click: () => {
+        // BrowserWindow.getFocusedWindow().webContents().send('close-main-window');
+        app.quit()
+      }
+    }
+  ])
+
+  // 注意: 你的 contextMenu, Tooltip 和 Title 代码需要写在这里!
+  tray.setContextMenu(contextMenu)
+  // 工具提示和标题
+  tray.setTitle(win.title)
+  tray.setToolTip(process.env.npm_package_description)
+
+  // 监听任务栏图标的单击、双击事件
+  tray.on('click', () => {
+    win.show()
+  })
+  tray.on('double-click', () => {
+    win.show()
+  })
+}
+
+app.whenReady().then(async () => {
+  await createWindow()
+  await initTray()
+})
 
 app.on('window-all-closed', () => {
   win = null
@@ -109,12 +163,13 @@ app.on('second-instance', () => {
   }
 })
 
-app.on('activate', () => {
+app.on('activate', async () => {
   const allWindows = BrowserWindow.getAllWindows()
   if (allWindows.length) {
     allWindows[0].focus()
   } else {
-    createWindow()
+    await createWindow()
+    await initTray()
   }
 })
 

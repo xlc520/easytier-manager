@@ -16,6 +16,7 @@ import * as toml from 'smol-toml'
 import { useEasyTierStore } from '@/store/modules/easytier'
 import log from '@/utils/logger'
 import path from 'path'
+import MonacoEditor from '@/components/monaco-editor'
 import {
   deleteFile,
   getFilesByExtension,
@@ -23,8 +24,7 @@ import {
   readFile,
   writeFile
 } from '@/utils/fileUtil'
-// import MonacoEditor from '@/components/monaco-editor/index.vue'
-const MonacoEditor = () => import('@/components/monaco-editor/index.vue')
+
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
 const { tableRegister, tableState, tableMethods } = useTable({
@@ -219,6 +219,7 @@ const { getList } = tableMethods
 
 const { allSchemas } = useCrudSchemas(crudSchemas)
 
+const MonacoEditRef = ref<InstanceType<typeof MonacoEditor>>()
 const dataConfig = ref('')
 const treeEl = ref<typeof ElTree>()
 const dialogVisible = ref(false)
@@ -329,6 +330,8 @@ const saveConfigAction = async () => {
     // @ts-nocheck
     const parseValue: EasyTierConfig = toml.parse(dataConfig.value)
     let networkName = parseValue.network_identity?.network_name
+    parseValue.file_logger.dir = path.join(await getUserDataPath(), 'log')
+    parseValue.file_logger.file = networkName
     await writeFile(CONFIG_PATH + '/' + networkName + '.toml', toml.stringify(parseValue))
     log.log('保存的代码', dataConfig.value)
     ElMessage.success(t('common.accessSuccess'))
@@ -351,10 +354,6 @@ const delConfig = async (row?) => {
       await getConfigList()
     })
 }
-const updateDataConfig = (val: string) => {
-  //val:子组件实时传过来的值
-  dataConfig.value = val
-}
 </script>
 
 <template>
@@ -369,17 +368,6 @@ const updateDataConfig = (val: string) => {
           >{{ t('easytier.reloadNetConfig') }}
         </BaseButton>
       </div>
-      <!--<Search
-        :schema="allSchemas.searchSchema"
-        @reset="setSearchParams"
-        @search="setSearchParams"
-      />-->
-      <!--<div class="mb-10px">
-        <BaseButton type="primary" @click="AddAction">{{ t('exampleDemo.add') }}</BaseButton>
-        <BaseButton :loading="delLoading" type="danger" @click="delData()">
-          {{ t('exampleDemo.del') }}
-        </BaseButton>
-      </div>-->
       <Table
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -393,22 +381,23 @@ const updateDataConfig = (val: string) => {
       />
     </ContentWrap>
 
-    <Dialog v-model="dialogVisible" :title="dialogTitle">
+    <Dialog v-model="dialogVisible" :title="dialogTitle" maxHeight="60vh">
       <Write
         v-if="editType === 'form'"
         ref="writeRef"
         :form-schema="allSchemas.formSchema"
         :current-row="currentRow"
       />
-      <MonacoEditor
-        v-if="editType !== 'form'"
-        ref="monacoEdit"
-        v-model:value="dataConfig"
-        :readonly="false"
-        language="toml"
-        theme="vs-dark"
-        :onContentChange="updateDataConfig"
-      />
+      <div class="edit-container h-60vh">
+        <MonacoEditor
+          v-if="editType !== 'form'"
+          ref="MonacoEditRef"
+          v-model="dataConfig"
+          language="toml"
+          :languageSelector="false"
+          :themeSelector="false"
+        />
+      </div>
       <template #footer>
         <span>默认配置名称为网络名称 </span>
         <BaseButton

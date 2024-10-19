@@ -6,16 +6,18 @@ import { onBeforeMount, reactive, ref, unref, watch } from 'vue'
 import { ElMessage, ElMessageBox, ElOption, ElOptionGroup, ElSelect, ElTree } from 'element-plus'
 import { deleteUserByIdApi } from '@/api/department'
 import { useTable } from '@/hooks/web/useTable'
-import Write from './components/Write.vue'
 import { Dialog } from '@/components/Dialog'
 import { useCrudSchemas } from '@/hooks/web/useCrudSchemas'
 import { BaseButton } from '@/components/Button'
 import crudSchemas from './crudSchemas'
-import MonacoEditor from '@/components/monaco-editor/index.vue'
 import { getFilesByExtension, readFile } from '@/utils/fileUtil'
 import { useEasyTierStore } from '@/store/modules/easytier'
 import { LOG_PATH } from '@/constants/easytier'
 import dayjs from 'dayjs'
+import { parseNodeInfo, parsePeerInfo } from '@/utils/easyTierUtil'
+import { Descriptions, DescriptionsSchema } from '@/components/Descriptions'
+import log from '@/utils/logger'
+import MonacoEditor from '@/components/monaco-editor'
 import {
   execCli,
   getRunningProcesses,
@@ -23,9 +25,6 @@ import {
   runChildEasyTier,
   sleep
 } from '@/utils/execUtil'
-import { parseNodeInfo, parsePeerInfo } from '@/utils/easyTierUtil'
-import { Descriptions, DescriptionsSchema } from '@/components/Descriptions'
-import log from '@/utils/logger'
 
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
@@ -50,21 +49,15 @@ const { getList } = tableMethods
 
 const { allSchemas } = useCrudSchemas(crudSchemas)
 
-const editDialogVisible = ref(false)
 const logDialogVisible = ref(false)
 const stopDisabled = ref(false)
 const descriptionCollapse = ref(false)
-const dataConfig = ref('')
 const logData = ref('')
 const nodeInfo = ref({})
 const peerInfo = ref<PeerInfo[]>([])
 const treeEl = ref<typeof ElTree>()
-const dialogVisible = ref(false)
 const dialogTitle = ref('')
-const actionType = ref('')
 const ids = ref<string[]>([])
-const writeRef = ref<ComponentRef<typeof Write>>()
-const saveLoading = ref(false)
 const currentNodeKey = ref('')
 const currentDepartment = ref('')
 const allConfigOptions = reactive([
@@ -126,15 +119,6 @@ watch(
     unref(treeEl)!.filter(val)
   }
 )
-onBeforeMount(async () => {
-  try {
-    await getConfigList()
-    getNodeInfo()
-    getPeerInfo()
-  } catch (e) {
-    log.debug('获取配置异常', e)
-  }
-})
 
 const getConfigList = async () => {
   const fileList = await getFilesByExtension('config', '.toml')
@@ -246,6 +230,10 @@ const stopAction = async () => {
     )
     if (commandLine.includes(currentNodeKey.value)) {
       await killProcess(pid)
+      nodeInfo.value = {}
+      peerInfo.value.length = 0
+      descriptionCollapse.value = false
+      await getList()
       ElMessage.success(t('common.accessSuccess'))
     }
   }
@@ -257,43 +245,26 @@ const viewLogAction = async () => {
   logData.value = await readFile(LOG_PATH + '/' + currentNodeKey.value + '.' + date)
   logDialogVisible.value = true
 }
-const addConfigAction = () => {}
-const saveConfigAction = async () => {
-  const write = unref(writeRef)
-  const formData = await write?.submit()
-  if (formData) {
-    saveLoading.value = true
-    try {
-    } catch (error) {
-      log.log(error)
-    } finally {
-      saveLoading.value = false
-      dialogVisible.value = false
-    }
+const refreshAction = async () => {
+  await getConfigList()
+  getNodeInfo()
+  getPeerInfo()
+  ElMessage.info('已刷新')
+}
+
+onBeforeMount(async () => {
+  try {
+    await getConfigList()
+    getNodeInfo()
+    getPeerInfo()
+  } catch (e) {
+    log.debug('获取配置异常', e)
   }
-}
-const updateDataConfig = (val: string) => {
-  //val:子组件实时传过来的值
-  log.debug(val)
-}
+})
 </script>
 
 <template>
   <div class="flex w-100% h-100%">
-    <!--<ContentWrap class="w-250px">
-      <div class="flex justify-center items-center">
-        <div class="flex-1">{{ t('userDemo.departmentList') }}</div>
-        <ElInput
-          v-model="currentDepartment"
-          class="flex-[2]"
-          :placeholder="t('userDemo.searchDepartment')"
-          clearable
-        />
-      </div>
-      <ElDivider />
-      组网列表
-    </ContentWrap>-->
-
     <ContentWrap class="flex-[3] ml-10px">
       <Descriptions
         :title="t('easytier.peerInfo')"
@@ -322,19 +293,9 @@ const updateDataConfig = (val: string) => {
         <BaseButton type="danger" :disabled="stopDisabled" @click="stopAction"
           >{{ t('easytier.stopNet') }}
         </BaseButton>
-        <BaseButton type="primary" @click="viewLogAction">{{ t('easytier.view_log') }}</BaseButton>
+        <BaseButton type="info" @click="viewLogAction">{{ t('easytier.view_log') }}</BaseButton>
+        <BaseButton type="primary" @click="refreshAction">{{ t('common.refresh') }}</BaseButton>
       </div>
-      <!--<Search
-        :schema="allSchemas.searchSchema"
-        @reset="setSearchParams"
-        @search="setSearchParams"
-      />-->
-      <!--<div class="mb-10px">
-        <BaseButton type="primary" @click="AddAction">{{ t('exampleDemo.add') }}</BaseButton>
-        <BaseButton :loading="delLoading" type="danger" @click="delData()">
-          {{ t('exampleDemo.del') }}
-        </BaseButton>
-      </div>-->
       <Table
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -350,43 +311,17 @@ const updateDataConfig = (val: string) => {
       />
     </ContentWrap>
 
-    <Dialog v-model="editDialogVisible" :title="dialogTitle">
-      <MonacoEditor
-        ref="monacoEdit"
-        v-model:value="dataConfig"
-        :readonly="false"
-        language="toml"
-        theme="vs-dark"
-        :update="updateDataConfig"
-      />
-      <template #footer>
-        <BaseButton
-          v-if="actionType === 'add'"
-          type="primary"
-          :loading="saveLoading"
-          @click="addConfigAction"
-        >
-          {{ t('exampleDemo.add') }}
-        </BaseButton>
-        <BaseButton
-          v-if="actionType === 'edit'"
-          type="primary"
-          :loading="saveLoading"
-          @click="saveConfigAction"
-        >
-          {{ t('exampleDemo.save') }}
-        </BaseButton>
-        <BaseButton @click="editDialogVisible = false">{{ t('dialogDemo.close') }}</BaseButton>
-      </template>
-    </Dialog>
-    <Dialog v-model="logDialogVisible" :title="dialogTitle">
-      <MonacoEditor
-        ref="monacoEdit"
-        v-model:value="logData"
-        :readonly="true"
-        language="log"
-        theme="vs-dark"
-      />
+    <Dialog v-model="logDialogVisible" :title="dialogTitle" maxHeight="60vh">
+      <div class="edit-container h-60vh">
+        <MonacoEditor
+          ref="MonacoEditRef"
+          v-model="logData"
+          language="log"
+          :readOnly="true"
+          :languageSelector="false"
+          :themeSelector="false"
+        />
+      </div>
       <template #footer>
         <BaseButton @click="logDialogVisible = false">{{ t('dialogDemo.close') }}</BaseButton>
       </template>

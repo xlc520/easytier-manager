@@ -10,9 +10,9 @@
   // 工件文件名
   //  "artifactName": "",
   //内部版本号
-  "buildNumber": "100",
+  "buildNumber": "110",
   //内部版本
-  "buildVersion": "1.0.0",
+  "buildVersion": "1.1.0",
   //版权
   "copyright": "easytier",
   "icon": "src/assets/imgs/logo.png",

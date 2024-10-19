@@ -2,7 +2,7 @@
 import { ElCollapseTransition, ElTooltip, ElRow, ElCol } from 'element-plus'
 import { useDesign } from '@/hooks/web/useDesign'
 import { propTypes } from '@/utils/propTypes'
-import { unref, PropType, computed, defineComponent, ref } from 'vue'
+import { unref, PropType, computed, defineComponent, ref, watch } from 'vue'
 import { useAppStore } from '@/store/modules/app'
 import { DescriptionsSchema } from './types'
 import { Icon } from '@/components/Icon'
@@ -29,11 +29,12 @@ export default defineComponent({
     size: propTypes.oneOf(['large', 'default', 'small']).def('default'),
     direction: propTypes.oneOf(['horizontal', 'vertical']).def('horizontal'),
     extra: propTypes.string.def(''),
-    show: {
-      // 折叠默认值，无法从父组件修改
-      type: Boolean,
-      default: false
-    },
+    show: propTypes.bool.def(false),
+    // show: {
+    //   // 折叠默认值，无法从父组件修改
+    //   type: Boolean,
+    //   default: false
+    // },
     schema: {
       type: Array as PropType<DescriptionsSchema[]>,
       default: () => []
@@ -79,6 +80,14 @@ export default defineComponent({
         show.value = !show.value
       }
     }
+    watch(
+      () => props.show,
+      (newShow) => {
+        if (props.collapse) {
+          show.value = newShow
+        }
+      }
+    )
 
     return () => {
       return (
