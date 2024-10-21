@@ -8,7 +8,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ windows-latest, ubuntu-latest, macos-latest ]
+        os: [ windows-latest, ubuntu-latest ]
+    #        os: [ windows-latest, ubuntu-latest, macos-latest ]
 
     steps:
       - name: Checkout repository
@@ -36,9 +37,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: pnpm run build:linux
 
-      - name: Build for MacOS
-        if: matrix.os == 'macos-latest'
-        run: pnpm run build:mac
+      #      - name: Build for MacOS
+      #        if: matrix.os == 'macos-latest'
+      #        run: pnpm run build:mac
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -47,7 +48,8 @@ jobs:
           path: release
 
       - name: Upload to GitHub Releases
-        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest' || (matrix.os == 'macos-latest' && env.MACOS_CERTIFICATE)
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest')
+        #        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest' || (matrix.os == 'macos-latest' && env.MACOS_CERTIFICATE)
         uses: softprops/action-gh-release@v1
         with:
           files: |
