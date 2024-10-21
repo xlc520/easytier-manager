@@ -1,4 +1,4 @@
-name: Build and Package Electron App
+name: Release
 
 on:
   workflow_dispatch:
@@ -58,4 +58,4 @@ jobs:
             release/*.tar.gz
             release/*.rpm
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
