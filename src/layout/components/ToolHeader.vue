@@ -32,8 +32,11 @@ const layout = computed(() => appStore.getLayout)
 // 多语言图标
 const locale = computed(() => appStore.getLocale)
 
-const toDocument = () => {
-  window.open('https://github.com/')
+const toDocumentEasytierManager = () => {
+  window.open('https://github.com/xlc520/easytier-manager')
+}
+const toDocumentEasyTier = () => {
+  window.open('https://github.com/EasyTier/EasyTier')
 }
 </script>
 
@@ -65,7 +68,10 @@ const toDocument = () => {
         class="custom-hover"
         :color="variables['top-header-text-color']"
       />
-      <div :class="prefixCls" @click="toDocument">
+      <div class="ml-1 mr-4" @click="toDocumentEasyTier">
+        <Icon :size="18" icon="devicon:github" class="cursor-pointer" />
+      </div>
+      <div class="mr-10" @click="toDocumentEasytierManager">
         <Icon :size="18" icon="devicon:github" class="cursor-pointer" />
       </div>
     </div>

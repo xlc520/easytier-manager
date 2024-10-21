@@ -270,6 +270,22 @@ onMounted(async () => {
         <el-descriptions-item>
           <template #label>
             <div class="cell-item">
+              <Icon icon="skill-icons:github-light" />
+              {{ t('easytier.github') }}
+            </div>
+          </template>
+          {{ t('easytier.githubManage') }} :
+          <el-link type="primary" target="_blank"
+            >https://github.com/xlc520/easytier-manager</el-link
+          >
+          <br />
+          {{ t('easytier.githubCore') }} :
+          <el-link type="primary" target="_blank">https://github.com/EasyTier/EasyTier</el-link>
+        </el-descriptions-item>
+
+        <el-descriptions-item>
+          <template #label>
+            <div class="cell-item">
               <el-icon size="16px">
                 <InfoFilled />
               </el-icon>

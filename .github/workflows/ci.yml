@@ -70,14 +70,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: easytier-manager-windows-x64
-          path: release/*win-x64*.zip
+          path: release/win-unpacked
 
       - name: Upload Artifact for Windows x86 zip
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: easytier-manager-windows-x86
-          path: release/*win-ia32*.zip
+          path: release/win-ia32-unpacked
 
       - name: Upload Artifact for Linux tar.gz
         if: matrix.os == 'ubuntu-latest'

@@ -1,7 +1,7 @@
 {
   "name": "easytier-manager",
   "version": "2.0.0",
-  "description": "EasyTier 管理器,组网,内网穿透",
+  "description": "EasyTier 管理器",
   "main": "dist-electron/main/index.js",
   "private": false,
   "author": {

@@ -26,7 +26,6 @@ import {
   sleep
 } from '@/utils/execUtil'
 import { notify } from '@/utils/notifyUtil'
-import { EpPropMergeType } from 'element-plus/es/utils'
 
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
@@ -54,14 +53,7 @@ const { allSchemas } = useCrudSchemas(crudSchemas)
 const logDialogVisible = ref(false)
 const stopDisabled = ref(false)
 const descriptionCollapse = ref(false)
-const runningTag =
-  ref<
-    EpPropMergeType<
-      StringConstructor,
-      'success' | 'warning' | 'info' | 'primary' | 'danger',
-      unknown
-    >
-  >('info')
+const runningTag = ref(false)
 const logData = ref('')
 const nodeInfo = ref({})
 const peerInfo = ref<PeerInfo[]>([])
@@ -260,7 +252,7 @@ const startAction = async () => {
       getNodeInfo()
       getPeerInfo()
       descriptionCollapse.value = true
-      runningTag.value = 'success'
+      runningTag.value = true
     })
     .catch(() => {
       ElMessageBox({
@@ -286,7 +278,7 @@ const reset = async () => {
   nodeInfo.value = {}
   peerInfo.value.length = 0
   descriptionCollapse.value = false
-  runningTag.value = 'info'
+  runningTag.value = false
   await getList()
 }
 const viewLogAction = async () => {
@@ -318,7 +310,7 @@ const isRunProcess = async () => {
 const currentNodeKeyChange = async () => {
   const p = await isRunProcess()
   if (p && p.commandLine) {
-    runningTag.value = 'success'
+    runningTag.value = true
     easyTierStore.setStopLoop(false)
     getNodeInfo()
     getPeerInfo()
@@ -328,7 +320,7 @@ const currentNodeKeyChange = async () => {
   nodeInfo.value = {}
   peerInfo.value.length = 0
   descriptionCollapse.value = false
-  runningTag.value = 'info'
+  runningTag.value = false
   await getList()
 }
 onBeforeMount(async () => {
@@ -373,11 +365,25 @@ onBeforeMount(async () => {
           <!--<ElOptionGroup v-for="group in allConfigOptions" :key="group.label" :label="group.label">
           </ElOptionGroup>-->
         </ElSelect>
-        <div class="ml-1 mr-3" style="display: inline">
-          <el-tag :type="runningTag" effect="dark" round>
-            {{ runningTag === 'success' ? t('easytier.running') : t('easytier.stopping') }}
-          </el-tag>
-        </div>
+        <el-switch
+          v-model="runningTag"
+          class="mr-2"
+          size="large"
+          inline-prompt
+          style="
+
+--el-switch-on-color: #03c75f; --el-switch-off-color: #ec2323"
+          :active-text="t('easytier.running')"
+          :inactive-text="t('easytier.stopping')"
+          disabled
+        >
+          <template #active-action>
+            <span class="custom-active-action">v</span>
+          </template>
+          <template #inactive-action>
+            <span class="custom-inactive-action">×</span>
+          </template>
+        </el-switch>
         <BaseButton type="success" @click="startAction">{{ t('easytier.startNet') }}</BaseButton>
         <BaseButton type="danger" :disabled="stopDisabled" @click="stopAction"
           >{{ t('easytier.stopNet') }}
