@@ -21,7 +21,7 @@
   // "compression": "store",
   "artifactName": "${productName}-${os}-${arch}_${version}.${ext}",
   "directories": {
-    "output": "release/${version}"
+    "output": "release"
   },
   "files": [
     "dist-electron",

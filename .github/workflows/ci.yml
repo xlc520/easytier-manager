@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+    #        os: [ windows-latest, ubuntu-latest, macos-latest ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '9'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Compile project
+        run: pnpm run build:compile
+
+      - name: Build for Windows
+        if: matrix.os == 'windows-latest'
+        run: pnpm run build:win
+
+      - name: Build for Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm run build:linux
+
+      #      - name: Build for MacOS
+      #        if: matrix.os == 'macos-latest' && (secrets.MACOS_CERTIFICATE && secrets.MACOS_CERTIFICATE_PASSWORD)
+      #        run: pnpm run build:mac
+
+      - name: Upload Artifact for Windows x64 Setup
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-manager-windows-x64_Setup
+          path: release/*win-x64*.exe
+
+      - name: Upload Artifact for Windows x86 Setup
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-manager-windows-x86_Setup
+          path: release/*win-ia32*.exe
+
+      - name: Upload Artifact for Windows x64 zip
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-manager-windows-x64
+          path: release/*win-x64*.zip
+
+      - name: Upload Artifact for Windows x86 zip
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-manager-windows-x86
+          path: release/*win-ia32*.zip
+
+      - name: Upload Artifact for Linux tar.gz
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-manager-linux.tar.gz
+          path: release/*.tar.gz
+
+      - name: Upload Artifact for Linux AppImage
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-manager-linux-AppImage
+          path: release/*.AppImage
+
+      - name: Upload Artifact for Linux deb
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-manager-linux-deb
+          path: release/*.deb
+
+#      - name: Upload Artifacts for MacOS
+#        if: matrix.os == 'macos-latest' && (secrets.MACOS_CERTIFICATE && secrets.MACOS_CERTIFICATE_PASSWORD)
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: macos-build
+#          path: dist/mac
