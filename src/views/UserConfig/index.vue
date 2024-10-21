@@ -1,15 +1,10 @@
 <script setup lang="tsx">
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
-import { Table } from '@/components/Table'
-import { reactive, ref, unref, watch } from 'vue'
-import { ElMessage, ElMessageBox, ElTree } from 'element-plus'
-import { deleteUserByIdApi } from '@/api/department'
-import type { DepartmentUserItem } from '@/api/department/types'
-import { useTable } from '@/hooks/web/useTable'
-import Write from './components/Write.vue'
+import { onMounted, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import Form from './components/Form.vue'
 import { Dialog } from '@/components/Dialog'
-import { CrudSchema, useCrudSchemas } from '@/hooks/web/useCrudSchemas'
 import { BaseButton } from '@/components/Button'
 import { CONFIG_PATH } from '@/constants/easytier'
 import * as toml from 'smol-toml'
@@ -17,6 +12,8 @@ import { useEasyTierStore } from '@/store/modules/easytier'
 import log from '@/utils/logger'
 import path from 'path'
 import MonacoEditor from '@/components/monaco-editor'
+import { installService, uninstallService } from '@/utils/execUtil'
+import defaultData from './components/defaultData'
 import {
   deleteFile,
   getFilesByExtension,
@@ -27,216 +24,18 @@ import {
 
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
-const { tableRegister, tableState, tableMethods } = useTable({
-  fetchDataApi: async () => {
-    // const res = await getConfigList()
-    const res = easyTierStore.configList
-    return {
-      list: res || [],
-      total: res.length || 0
-    }
-  },
-  fetchDelApi: async () => {
-    const res = await deleteUserByIdApi(unref(ids))
-    return !!res
-  }
-})
-const crudSchemas = reactive<CrudSchema[]>([
-  {
-    field: 'index',
-    label: t('userDemo.index'),
-    form: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    },
-    detail: {
-      hidden: true
-    },
-    table: {
-      type: 'index'
-    }
-  },
-  {
-    field: 'hostname',
-    label: t('easytier.hostname'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'network_name',
-    label: t('easytier.network_name'),
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'network_secret',
-    label: t('easytier.network_secret'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'dhcp',
-    label: t('easytier.dhcp'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'ipv4Vir',
-    label: t('easytier.ipv4Vir'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'peers',
-    label: t('easytier.peers'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'proxy_network',
-    label: t('easytier.proxy_network'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'default_protocol',
-    label: t('easytier.default_protocol'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'console_log_level',
-    // trace, debug, info, warn, error, off
-    label: t('easytier.console_log_level'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'file_log_level',
-    // trace, debug, info, warn, error, off
-    label: t('easytier.file_log_level'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'file_log_dir',
-    label: t('easytier.file_log_dir'),
-    table: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'action',
-    label: t('userDemo.action'),
-    form: {
-      hidden: true
-    },
-    detail: {
-      hidden: true
-    },
-    search: {
-      hidden: true
-    },
-    table: {
-      width: 340,
-      slots: {
-        default: (data: any) => {
-          const row = data.row as DepartmentUserItem
-          return (
-            <>
-              <BaseButton
-                type="primary"
-                onClick={() => {
-                  editType.value = ''
-                  action(row, 'edit')
-                }}
-              >
-                {t('easytier.editNetConfig')}
-              </BaseButton>
-              <BaseButton
-                type="primary"
-                onClick={() => {
-                  editType.value = 'form'
-                  action(row, 'edit')
-                }}
-              >
-                {t('easytier.editNetConfigForm')}
-              </BaseButton>
-              <BaseButton type="danger" onClick={() => delConfig(row)}>
-                {t('exampleDemo.del')}
-              </BaseButton>
-            </>
-          )
-        }
-      }
-    }
-  }
-])
-const { total, loading, dataList, pageSize, currentPage } = tableState
-const { getList } = tableMethods
-
-const { allSchemas } = useCrudSchemas(crudSchemas)
-
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const tableData = ref()
 const MonacoEditRef = ref<InstanceType<typeof MonacoEditor>>()
 const dataConfig = ref('')
-const treeEl = ref<typeof ElTree>()
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const actionType = ref('')
 const editType = ref('')
-const ids = ref<string[]>([])
-const writeRef = ref<ComponentRef<typeof Write>>()
 const saveLoading = ref(false)
-const currentDepartment = ref('')
-const currentRow = ref<DepartmentUserItem>()
-watch(
-  () => currentDepartment.value,
-  (val) => {
-    unref(treeEl)!.filter(val)
-  }
-)
+const formData = ref<FormData>(defaultData.formData)
 const getConfigList = async () => {
   const fileList = await getFilesByExtension('config', '.toml')
   easyTierStore.setFileList(fileList)
@@ -244,36 +43,50 @@ const getConfigList = async () => {
   let tmpList2: any = []
   fileList.forEach((f: string) => {
     const fileName = f.replace('.toml', '')
-    tmpList.push({ network_name: fileName })
+    tmpList.push({ network_identity: { network_name: fileName } })
     tmpList2.push(fileName)
   })
   easyTierStore.setConfigList(tmpList)
   easyTierStore.setFileListNoSuffix(tmpList2)
-  await getList()
+  tableData.value = tmpList
   return tmpList
 }
 
 const readFileData = async (fileName: string) => {
   dataConfig.value = await readFile(fileName)
 }
-const action = async (row: any, type: string) => {
-  dialogTitle.value = t(type === 'edit' ? 'exampleDemo.edit' : 'exampleDemo.detail')
-  actionType.value = type
-  currentRow.value = { ...row }
-  await readFileData(CONFIG_PATH + '/' + row.network_name + '.toml')
+
+const edit = async (row) => {
+  dialogTitle.value = t('exampleDemo.edit')
+  actionType.value = 'edit'
+  editType.value = ''
+  await readFileData(CONFIG_PATH + '/' + row.network_identity.network_name + '.toml')
   dialogVisible.value = true
 }
+
+const editForm = async (row) => {
+  dialogTitle.value = t('exampleDemo.edit')
+  actionType.value = 'edit'
+  editType.value = 'form'
+  await readFileData(CONFIG_PATH + '/' + row.network_identity.network_name + '.toml')
+  let parse = Object.assign({}, formData.value, toml.parse(dataConfig.value))
+  formData.value = parse as FormData
+  dialogVisible.value = true
+}
+
 const AddAction = () => {
   dialogTitle.value = t('easytier.addNetConfig')
-  dialogVisible.value = true
   actionType.value = 'add'
   editType.value = ''
+  dataConfig.value = ''
+  dialogVisible.value = true
 }
 const AddFormAction = () => {
   dialogTitle.value = t('easytier.addNetConfigForm')
-  dialogVisible.value = true
+  formData.value = defaultData.formData
   actionType.value = 'add'
   editType.value = 'form'
+  dialogVisible.value = true
 }
 const refreshAction = async () => {
   await getConfigList()
@@ -281,20 +94,29 @@ const refreshAction = async () => {
 const addConfigAction = async () => {
   // todo 如果已经存在网络名则提示
   if (editType.value === 'form') {
-    // const write = unref(writeRef)
-    // const formData = await write?.submit()
-    // if (formData) {
-    //   saveLoading.value = true
-    //   try {
-    //   } catch (error) {
-    //     log.log(error)
-    //   } finally {
-    //     saveLoading.value = false
-    //     dialogVisible.value = false
-    //   }
-    // }
+    saveLoading.value = true
+    try {
+      let networkName = formData.value.network_identity?.network_name
+      formData.value.file_logger.dir = path.join(await getUserDataPath(), 'log')
+      formData.value.file_logger.file = networkName
+      if (formData.value.proxy_network?.length === 0) {
+        formData.value.proxy_network = undefined
+      }
+      if (formData.value.peer?.length === 0) {
+        formData.value.peer = undefined
+      }
+      await writeFile(CONFIG_PATH + '/' + networkName + '.toml', toml.stringify(formData.value))
+      ElMessage.success(t('common.accessSuccess'))
+    } catch (error) {
+      log.log('表单新增报错：' + error)
+      ElMessage.error('表单新增报错')
+    } finally {
+      saveLoading.value = false
+      dialogVisible.value = false
+    }
   } else {
     try {
+      saveLoading.value = true
       // @ts-ignore
       // @ts-nocheck
       const parseValue: EasyTierConfig = toml.parse(dataConfig.value)
@@ -306,6 +128,7 @@ const addConfigAction = async () => {
     } catch (error) {
       log.error('Error writing file:', error)
     } finally {
+      saveLoading.value = false
       dialogVisible.value = false
     }
   }
@@ -313,13 +136,17 @@ const addConfigAction = async () => {
 }
 const saveConfigAction = async () => {
   if (editType.value === 'form') {
-    const write = unref(writeRef)
-    const formData = await write?.submit()
-    if (formData) {
+    if (formData.value) {
       saveLoading.value = true
       try {
+        let networkName = formData.value.network_identity?.network_name
+        formData.value.file_logger.dir = path.join(await getUserDataPath(), 'log')
+        formData.value.file_logger.file = networkName
+        await writeFile(CONFIG_PATH + '/' + networkName + '.toml', toml.stringify(formData.value))
+        ElMessage.success(t('common.accessSuccess'))
       } catch (error) {
-        log.log(error)
+        log.log('表单保存报错：' + error)
+        ElMessage.error('表单保存报错')
       } finally {
         saveLoading.value = false
         dialogVisible.value = false
@@ -333,42 +160,130 @@ const saveConfigAction = async () => {
     parseValue.file_logger.dir = path.join(await getUserDataPath(), 'log')
     parseValue.file_logger.file = networkName
     await writeFile(CONFIG_PATH + '/' + networkName + '.toml', toml.stringify(parseValue))
-    log.log('保存的代码', dataConfig.value)
     ElMessage.success(t('common.accessSuccess'))
     dialogVisible.value = false
   }
   await getConfigList()
 }
 const delConfig = async (row?) => {
-  log.log('删除', row)
   ElMessageBox.confirm(t('common.delMessage'), t('common.delWarning'), {
     confirmButtonText: t('common.delOk'),
     cancelButtonText: t('common.delCancel'),
     type: 'warning'
   })
     .then(async () => {
-      await deleteFile(CONFIG_PATH + '/' + row?.network_name + '.toml')
+      log.log('删除', row)
+      await deleteFile(CONFIG_PATH + '/' + row.network_identity?.network_name + '.toml')
       ElMessage.success(t('common.delSuccess'))
     })
     .finally(async () => {
       await getConfigList()
     })
 }
+
+const serviceName = 'easytier'
+const installServiceHandle = async (row) => {
+  ElMessageBox.confirm(t('easytier.installServiceMessage'), t('common.reminder'), {
+    confirmButtonText: t('common.ok'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning'
+  }).then(async () => {
+    const binPath = path.join(await getUserDataPath(), 'bin', 'easytier-core')
+    const confiPath = path.join(
+      await getUserDataPath(),
+      'config',
+      row?.network_identity.network_name + '.toml'
+    )
+    await installService(serviceName, binPath, confiPath)
+    ElMessage.success(t('common.accessSuccess'))
+  })
+}
+
+const uninstallServiceHandle = async () => {
+  ElMessageBox.confirm(t('easytier.uninstallServiceMessage'), t('common.reminder'), {
+    confirmButtonText: t('common.ok'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning'
+  }).then(async () => {
+    await uninstallService(serviceName)
+    ElMessage.success(t('common.accessSuccess'))
+  })
+}
+
+onMounted(async () => {
+  await getConfigList()
+})
 </script>
 
 <template>
   <div class="flex w-100% h-100%">
     <ContentWrap class="flex-[3] ml-10px">
       <div class="mb-10px">
+        <BaseButton type="primary" @click="AddAction">{{ t('easytier.addNetConfig') }}</BaseButton>
         <BaseButton type="primary" @click="AddFormAction"
           >{{ t('easytier.addNetConfigForm') }}
         </BaseButton>
-        <BaseButton type="primary" @click="AddAction">{{ t('easytier.addNetConfig') }}</BaseButton>
         <BaseButton type="info" @click="refreshAction"
           >{{ t('easytier.reloadNetConfig') }}
         </BaseButton>
       </div>
-      <Table
+      <el-table
+        :data="tableData"
+        height="55vh"
+        table-layout="fixed"
+        empty-text="No Data"
+        border
+        stripe
+      >
+        <el-table-column
+          type="index"
+          label="序号"
+          :index="1"
+          width="70"
+          header-align="center"
+          align="center"
+        />
+        <el-table-column
+          prop="network_identity.network_name"
+          label="网络名称"
+          header-align="center"
+          align="center"
+          show-overflow-tooltip
+          sortable
+        />
+        <el-table-column label="操作" width="360" header-align="center" align="center">
+          <template #default="{ row }">
+            <el-row justify="center">
+              <BaseButton type="primary" size="small" @click="edit(row)">
+                {{ t('easytier.editNetConfig') }}
+              </BaseButton>
+              <BaseButton type="primary" size="small" @click="editForm(row)">
+                {{ t('easytier.editNetConfigForm') }}
+              </BaseButton>
+            </el-row>
+            <BaseButton type="info" size="small" @click="installServiceHandle(row)">
+              {{ t('easytier.installService') }}
+            </BaseButton>
+            <BaseButton type="warning" size="small" @click="uninstallServiceHandle()">
+              {{ t('easytier.uninstallService') }}
+            </BaseButton>
+            <BaseButton type="danger" size="small" @click="delConfig(row)">
+              {{ t('exampleDemo.del') }}
+            </BaseButton>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="mt-3">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 30, 40, 50, 100]"
+          :background="false"
+          layout="sizes, prev, pager, next, jumper, ->, total"
+          :total="total"
+        />
+      </div>
+      <!--<Table
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :columns="allSchemas.tableColumns"
@@ -378,19 +293,13 @@ const delConfig = async (row?) => {
         :pagination="{
           total
         }"
-      />
+      />-->
     </ContentWrap>
 
     <Dialog v-model="dialogVisible" :title="dialogTitle" maxHeight="60vh">
-      <Write
-        v-if="editType === 'form'"
-        ref="writeRef"
-        :form-schema="allSchemas.formSchema"
-        :current-row="currentRow"
-      />
-      <div class="edit-container h-60vh">
+      <Form v-if="editType === 'form'" :form-data="formData" />
+      <div class="edit-container h-60vh" v-if="editType !== 'form'">
         <MonacoEditor
-          v-if="editType !== 'form'"
           ref="MonacoEditRef"
           v-model="dataConfig"
           language="toml"
@@ -424,5 +333,10 @@ const delConfig = async (row?) => {
 <style lang="less">
 .@{elNamespace}-dialog {
   --el-dialog-width: 70%;
+}
+
+.el-table__header {
+  width: 100% !important;
+  text-align: center;
 }
 </style>

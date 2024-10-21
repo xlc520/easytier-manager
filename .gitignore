@@ -8,3 +8,5 @@ dist-ssr
 pnpm-debug
 release
 .idea
+dist-electron
+tmp

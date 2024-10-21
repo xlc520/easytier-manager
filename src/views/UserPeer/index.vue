@@ -3,7 +3,7 @@ import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { Table } from '@/components/Table'
 import { onBeforeMount, reactive, ref, unref, watch } from 'vue'
-import { ElMessage, ElMessageBox, ElOption, ElOptionGroup, ElSelect, ElTree } from 'element-plus'
+import { ElMessage, ElMessageBox, ElOption, ElSelect, ElTree } from 'element-plus'
 import { deleteUserByIdApi } from '@/api/department'
 import { useTable } from '@/hooks/web/useTable'
 import { Dialog } from '@/components/Dialog'
@@ -25,6 +25,8 @@ import {
   runChildEasyTier,
   sleep
 } from '@/utils/execUtil'
+import { notify } from '@/utils/notifyUtil'
+import { EpPropMergeType } from 'element-plus/es/utils'
 
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
@@ -52,6 +54,14 @@ const { allSchemas } = useCrudSchemas(crudSchemas)
 const logDialogVisible = ref(false)
 const stopDisabled = ref(false)
 const descriptionCollapse = ref(false)
+const runningTag =
+  ref<
+    EpPropMergeType<
+      StringConstructor,
+      'success' | 'warning' | 'info' | 'primary' | 'danger',
+      unknown
+    >
+  >('info')
 const logData = ref('')
 const nodeInfo = ref({})
 const peerInfo = ref<PeerInfo[]>([])
@@ -60,16 +70,23 @@ const dialogTitle = ref('')
 const ids = ref<string[]>([])
 const currentNodeKey = ref('')
 const currentDepartment = ref('')
-const allConfigOptions = reactive([
+const allConfigOptions = ref([
   {
-    label: '运行中',
-    options: [{ label: '', value: '' }]
-  },
-  {
-    label: '未运行',
-    options: [{ label: '', value: '' }]
+    label: '',
+    value: ''
   }
 ])
+// 暂时无法判断配置是哪个节点网络
+// const allConfigOptions = reactive([
+//   {
+//     label: '运行中',
+//     options: [{ label: '', value: '' }]
+//   },
+//   {
+//     label: '未运行',
+//     options: [{ label: '', value: '' }]
+//   }
+// ])
 
 const nodeInfoSchema = reactive<DescriptionsSchema[]>([
   {
@@ -135,7 +152,8 @@ const getConfigList = async () => {
   easyTierStore.setConfigList(tmpList)
   easyTierStore.setFileListNoSuffix(tmpList2)
   easyTierStore.setAllConfigOptions(tmpList3)
-  allConfigOptions[1].options = tmpList3
+  allConfigOptions.value = tmpList3
+  // allConfigOptions[1].options = tmpList3
   // todo 使用上次的配置
   currentNodeKey.value = tmpList[0].network_name
 }
@@ -148,6 +166,9 @@ const getNodeInfo = async () => {
       break
     }
     const res = await execCli('node')
+    if (res === 403) {
+      easyTierStore.setStopLoop(true)
+    }
     if (!res) {
       retryTime++
       continue
@@ -171,6 +192,20 @@ const getPeerInfo = async () => {
       break
     }
     const res = await execCli('peer')
+    if (res === 403) {
+      easyTierStore.setStopLoop(true)
+      ElMessageBox.alert(
+        'easytier-core 或 easytier-cli 不存在或无可执行权限，请到设置页下载安装，或授予可执行权限<br>' +
+          '<b>使用：</b><br>1.先到设置检测内核是否存在；<br>2.配置页新建组网配置；<br>3.工作台运行配置',
+        t('common.reminder'),
+        {
+          confirmButtonText: t('common.ok'),
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
+      )
+      continue
+    }
     if (!res) {
       retryTime++
       continue
@@ -178,6 +213,10 @@ const getPeerInfo = async () => {
       retryTime = 0
     }
     peerInfo.value = parsePeerInfo(res)
+    const filter = peerInfo.value.filter((value) => value.ipv4 && value.cost !== 'Local')
+    const filter1 = peerInfo.value.filter(
+      (value) => value.ipv4 && value.cost !== 'Local' && value.cost === 'p2p'
+    )
     peerInfo.value.forEach((value) => {
       if (value.cost === 'Local') {
         value.cost = '本机'
@@ -186,6 +225,16 @@ const getPeerInfo = async () => {
         value.ipv4 = value.ipv4.split('/')[0]
       }
     })
+    if (
+      easyTierStore.p2pNotify &&
+      filter.length > 0 &&
+      filter1.length > 0 &&
+      filter.length === filter1.length
+    ) {
+      notify('EasyTier 管理器', '恭喜你，全部节点建立 P2P 连接！🎉🎉')
+      // 只通知一次
+      easyTierStore.setP2pNotify(false)
+    }
     await getList()
     await sleep(7000)
   }
@@ -207,9 +256,11 @@ const startAction = async () => {
       }
       stopDisabled.value = false
       easyTierStore.setStopLoop(false)
+      easyTierStore.setP2pNotify(true)
       getNodeInfo()
       getPeerInfo()
       descriptionCollapse.value = true
+      runningTag.value = 'success'
     })
     .catch(() => {
       ElMessageBox({
@@ -223,23 +274,21 @@ const startAction = async () => {
 }
 const stopAction = async () => {
   log.log('停止运行配置:', currentNodeKey.value)
-  const processes = await getRunningProcesses('easytier-core')
-  if (processes && processes.length > 0) {
-    const { commandLine, pid } = processes.find((value: any) =>
-      value.commandLine?.includes(currentNodeKey.value)
-    )
-    if (commandLine.includes(currentNodeKey.value)) {
-      await killProcess(pid)
-      nodeInfo.value = {}
-      peerInfo.value.length = 0
-      descriptionCollapse.value = false
-      await getList()
-      ElMessage.success(t('common.accessSuccess'))
-    }
+  const p = await isRunProcess()
+  if (p && p.commandLine) {
+    await killProcess(p.pid)
+    await reset()
+    ElMessage.success(t('common.accessSuccess'))
   }
   easyTierStore.setStopLoop(true)
 }
-
+const reset = async () => {
+  nodeInfo.value = {}
+  peerInfo.value.length = 0
+  descriptionCollapse.value = false
+  runningTag.value = 'info'
+  await getList()
+}
 const viewLogAction = async () => {
   const date = dayjs(new Date()).format('YYYY-MM-DD')
   logData.value = await readFile(LOG_PATH + '/' + currentNodeKey.value + '.' + date)
@@ -251,12 +300,43 @@ const refreshAction = async () => {
   getPeerInfo()
   ElMessage.info('已刷新')
 }
-
+// 是则返回进程信息，不是则 undefined
+const isRunProcess = async () => {
+  const processes = await getRunningProcesses('easytier-core')
+  try {
+    if (processes && processes.length > 0) {
+      const p = processes.find((value: any) => value.commandLine?.includes(currentNodeKey.value))
+      if (p && p.commandLine) {
+        return p
+      }
+    }
+  } catch (e) {
+    log.error('错误' + e)
+  }
+  return undefined
+}
+const currentNodeKeyChange = async () => {
+  const p = await isRunProcess()
+  if (p && p.commandLine) {
+    runningTag.value = 'success'
+    easyTierStore.setStopLoop(false)
+    getNodeInfo()
+    getPeerInfo()
+    await getList()
+    return
+  }
+  nodeInfo.value = {}
+  peerInfo.value.length = 0
+  descriptionCollapse.value = false
+  runningTag.value = 'info'
+  await getList()
+}
 onBeforeMount(async () => {
   try {
     await getConfigList()
     getNodeInfo()
     getPeerInfo()
+    currentNodeKeyChange()
   } catch (e) {
     log.debug('获取配置异常', e)
   }
@@ -272,23 +352,32 @@ onBeforeMount(async () => {
         :schema="nodeInfoSchema"
         :show="descriptionCollapse"
       />
-      <div class="mt-5 mb-10px">
+      <small
+        >注：当前配置是否在运行，以<b>选择框后的状态</b>为主，由于核心的原因，可能无法获取指定配置的节点信息</small
+      >
+      <div class="mt-3 mb-10px">
         <ElSelect
           v-model="currentNodeKey"
           placeholder="选择配置"
           class="mr-10px"
           style="width: 240px"
           default-first-option
+          @change="currentNodeKeyChange"
         >
-          <ElOptionGroup v-for="group in allConfigOptions" :key="group.label" :label="group.label">
-            <ElOption
-              v-for="item in group.options"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </ElOptionGroup>
+          <ElOption
+            v-for="item in allConfigOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+          <!--<ElOptionGroup v-for="group in allConfigOptions" :key="group.label" :label="group.label">
+          </ElOptionGroup>-->
         </ElSelect>
+        <div class="ml-1 mr-3" style="display: inline">
+          <el-tag :type="runningTag" effect="dark" round>
+            {{ runningTag === 'success' ? t('easytier.running') : t('easytier.stopping') }}
+          </el-tag>
+        </div>
         <BaseButton type="success" @click="startAction">{{ t('easytier.startNet') }}</BaseButton>
         <BaseButton type="danger" :disabled="stopDisabled" @click="stopAction"
           >{{ t('easytier.stopNet') }}

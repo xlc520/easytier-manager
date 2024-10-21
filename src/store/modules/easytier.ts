@@ -8,6 +8,8 @@ export const useEasyTierStore = defineStore('easytier', () => {
   // 带有文件后缀
   const fileListNoSuffix = ref([])
   const stopLoop = ref(false)
+  // 是否 通知 全部节点建立 P2P 连接  true:通知  false:不同值
+  const p2pNotify = ref(true)
   const setConfigList = (list) => {
     configList.value = list
   }
@@ -23,16 +25,21 @@ export const useEasyTierStore = defineStore('easytier', () => {
   const setStopLoop = (flag) => {
     stopLoop.value = flag
   }
+  const setP2pNotify = (flag) => {
+    p2pNotify.value = flag
+  }
   return {
     configList,
     fileList,
     fileListNoSuffix,
     allConfigOptions,
     stopLoop,
+    p2pNotify,
     setConfigList,
     setFileList,
     setFileListNoSuffix,
     setAllConfigOptions,
-    setStopLoop
+    setStopLoop,
+    setP2pNotify
   }
 })

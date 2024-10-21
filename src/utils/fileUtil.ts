@@ -5,7 +5,7 @@ import log from '@/utils/logger'
 
 export const readFile = async (filePath: string) => {
   try {
-    return await ipcRenderer.invoke('read-file', filePath)
+    return await ipcRenderer.invoke('readFile', filePath)
   } catch (error) {
     log.error('Error reading file:', error)
   }
@@ -13,7 +13,7 @@ export const readFile = async (filePath: string) => {
 
 export const writeFile = async (filePath: string, content: any) => {
   try {
-    await ipcRenderer.invoke('write-file', filePath, content)
+    await ipcRenderer.invoke('writeFile', filePath, content)
   } catch (error) {
     log.error('Error writing file:', error)
   }

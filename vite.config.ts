@@ -6,19 +6,18 @@ import VueJsx from '@vitejs/plugin-vue-jsx'
 import progress from 'vite-plugin-progress'
 import EslintPlugin from 'vite-plugin-eslint'
 import { ViteEjsPlugin } from 'vite-plugin-ejs'
-// import { viteMockServe } from 'vite-plugin-mock'
 import PurgeIcons from 'vite-plugin-purge-icons'
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import { createStyleImportPlugin, ElementPlusResolve } from 'vite-plugin-style-import'
-import UnoCSS from 'unocss/vite'
 import { visualizer } from 'rollup-plugin-visualizer'
 import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
 import pkg from './package.json'
 import Components from 'unplugin-vue-components/vite';
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
-
+// 0.59以下使用下面
+// import UnoCSS from 'unocss/vite'
 const sourcemap = !!process.env.VSCODE_DEBUG
 const isBuild = process.argv.slice(2).includes('build')
 
@@ -29,7 +28,9 @@ function pathResolve(dir: string) {
     return resolve(root, '.', dir)
 }
 
-export default ({command, mode}: ConfigEnv): UserConfig => {
+export default async ({command, mode}: ConfigEnv): Promise<UserConfig> => {
+    // 0.59以上使用下面 https://github.com/MellowCo/unocss-preset-weapp/issues/155#issuecomment-2316763709
+    const UnoCss = await import('unocss/vite').then(i => i.default)
     let env = {} as any
     const isBuild = command === 'build'
     if (!isBuild) {
@@ -83,7 +84,7 @@ export default ({command, mode}: ConfigEnv): UserConfig => {
             ViteEjsPlugin({
                 title: env.VITE_APP_TITLE
             }),
-            UnoCSS(),
+            UnoCss(),
             electron([
                 {
                     // Main-Process entry file of the Electron App.

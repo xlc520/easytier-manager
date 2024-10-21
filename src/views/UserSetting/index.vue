@@ -66,7 +66,7 @@ const mirrorUrlSelect = ref<string>('')
 //   // return downUrl
 // }
 const downLoadCore = async () => {
-  ElMessage.info(t('easytier.startDownload'))
+  // ElMessage.info(t('easytier.startDownload'))
   // 尝试官方链接
   for (const mirror of GITHUB_MIRROR_URL) {
     if (downLoadSuccess.value) {
@@ -75,8 +75,15 @@ const downLoadCore = async () => {
     ElMessage.info('开始使用加速源下载:' + mirror.value)
     await downloadEasyTier(fileName.value, mirror.value)
     if (mirror.value == GITHUB_MIRROR_URL[-1].value) {
-      log.error('所有加速都下载失败，请手动下载替换或者魔法！')
-      ElMessage.error('所有加速都下载失败，请手动下载替换或者魔法！')
+      // 使用默认链接
+      await downloadEasyTier(fileName.value, mirror.value)
+        .then(() => {
+          ElMessage.success('下载成功')
+        })
+        .catch(() => {
+          log.error('所有加速都下载失败，请手动下载替换或者魔法！')
+          ElMessage.error('所有加速都下载失败，请手动下载替换或者魔法！')
+        })
     }
   }
 }
@@ -89,7 +96,7 @@ const installCore = async () => {
 }
 const checkCorePath = async () => {
   const ver = await execCli('-V')
-  if (ver) {
+  if (ver && ver !== 403) {
     form.coreVersion = ver
     checkCorePathSuccess.value = true
   } else {
@@ -138,7 +145,7 @@ onMounted(async () => {
   sysInfo.value = await getSysInfo()
   userDataPath.value = await getUserDataPath()
   const ver = await execCli('-V')
-  if (ver) {
+  if (ver && ver !== 403) {
     form.coreVersion = ver
   }
   form.corePath = path.join(userDataPath.value, 'bin')
@@ -164,6 +171,8 @@ onMounted(async () => {
 <template>
   <div class="flex w-100% h-100%">
     <ContentWrap class="flex-[3] ml-10px" :title="t('common.setting')">
+      1.请先检测内核是否已存在再下载<br />
+      2.下载完记得安装<br />
       <el-descriptions class="margin-top" :column="1" border>
         <el-descriptions-item>
           <template #label>
@@ -208,7 +217,10 @@ onMounted(async () => {
               {{ t('easytier.downLoadCore') }}
             </div>
           </template>
-          请先检测内核是否已存在再下载；选择版本时可以手动输入；默认随机加速链接 <br />
+          1.选择版本时可以手动输入；<br />
+          2.为空默认随机加速链接；<br />
+          3.下载视网络情况而定，一般30秒以内；<br />
+          4.下载完后点击安装，安装成功可检测内核是否存在<br />
           <el-select
             v-model="verSelect"
             filterable

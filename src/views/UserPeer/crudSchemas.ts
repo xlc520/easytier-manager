@@ -52,20 +52,6 @@ const crudSchemas = reactive<CrudSchema[]>([
     }
   },
   {
-    field: 'lat_ms',
-    label: t('easytier.lat_ms'),
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'loss_rate',
-    label: t('easytier.loss_rate'),
-    search: {
-      hidden: true
-    }
-  },
-  {
     field: 'rx_bytes',
     label: t('easytier.rx_bytes'),
     search: {
@@ -80,12 +66,16 @@ const crudSchemas = reactive<CrudSchema[]>([
     }
   },
   {
-    field: 'tunnel_proto',
-    label: t('easytier.tunnel_proto'),
+    field: 'lat_ms',
+    label: t('easytier.lat_ms'),
     search: {
       hidden: true
-    },
-    table: {
+    }
+  },
+  {
+    field: 'loss_rate',
+    label: t('easytier.loss_rate'),
+    search: {
       hidden: true
     }
   },
@@ -101,6 +91,16 @@ const crudSchemas = reactive<CrudSchema[]>([
     label: t('easytier.version'),
     search: {
       hidden: true
+    }
+  },
+  {
+    field: 'tunnel_proto',
+    label: t('easytier.tunnel_proto'),
+    search: {
+      hidden: true
+    },
+    table: {
+      hidden: false
     }
   }
 ])

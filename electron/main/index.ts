@@ -14,7 +14,14 @@ import { release } from 'os'
 import path, { join } from 'path'
 import * as mainUtil from './mainUtil'
 import log from './logger'
-import { ContextMenu as contextMenu } from '../../src/components/ContextMenu'
+import {
+  installServiceOnLinux,
+  installServiceOnMacOS,
+  installServiceOnWindows,
+  uninstallServiceOnLinux,
+  uninstallServiceOnMacOS,
+  uninstallServiceOnWindows
+} from './mainUtil'
 
 process.env.DIST_ELECTRON = join(__dirname, '..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist')
@@ -223,8 +230,8 @@ ipcMain.handle('getFilesByExtension', async (event, dirPath: string, extension: 
   mainUtil.getFilesByExtension(dirPath, extension)
 )
 ipcMain.handle('getSysInfo', async (event) => mainUtil.getSysInfo())
-ipcMain.handle('read-file', async (event, filePath) => mainUtil.readFile(filePath))
-ipcMain.handle('write-file', async (event, filePath, content) =>
+ipcMain.handle('readFile', async (event, filePath) => mainUtil.readFile(filePath))
+ipcMain.handle('writeFile', async (event, filePath, content) =>
   mainUtil.writeFile(filePath, content)
 )
 ipcMain.handle('deleteFile', async (event, filePath) => mainUtil.deleteFile(filePath))
@@ -242,6 +249,24 @@ ipcMain.on('download', async (event, url, savePath) => mainUtil.download(event, 
 // 处理压缩包解压
 ipcMain.handle('extractZip', async (event, fileName, targetDir) =>
   mainUtil.extractZip(event, fileName, targetDir)
+)
+ipcMain.handle('installServiceOnWindows', async (event, serviceName, programPath, args) =>
+  mainUtil.installServiceOnWindows(serviceName, programPath, args)
+)
+ipcMain.handle('uninstallServiceOnWindows', async (event, serviceName) =>
+  mainUtil.uninstallServiceOnWindows(serviceName)
+)
+ipcMain.handle('installServiceOnLinux', async (event, serviceName, programPath, args) =>
+  mainUtil.installServiceOnLinux(serviceName, programPath, args)
+)
+ipcMain.handle('uninstallServiceOnLinux', async (event, serviceName) =>
+  mainUtil.uninstallServiceOnLinux(serviceName)
+)
+ipcMain.handle('installServiceOnMacOS', async (event, serviceName, programPath, args) =>
+  mainUtil.installServiceOnMacOS(serviceName, programPath, args)
+)
+ipcMain.handle('uninstallServiceOnMacOS', async (event, serviceName) =>
+  mainUtil.uninstallServiceOnMacOS(serviceName)
 )
 
 // 日志

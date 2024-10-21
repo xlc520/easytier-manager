@@ -3,10 +3,11 @@ import path from 'path'
 import { exec, spawn } from 'child_process'
 import { app } from 'electron'
 import axios from 'axios'
+import fs from 'fs'
 
 const AdmZip = require('adm-zip')
 
-const fs = require('fs').promises
+// const fs = require('fs').promises
 
 const osPlatform = os.platform()
 
@@ -20,8 +21,9 @@ const userDataPath = app.getPath('userData')
  */
 export const readFile = async (filePath: string) => {
   try {
-    const dataPath = path.join(userDataPath, filePath)
-    const data = await fs.readFile(dataPath)
+    const dataPath2 = path.join(userDataPath, filePath)
+    fs.accessSync(dataPath2)
+    const data = fs.readFileSync(dataPath2)
     return new TextDecoder('utf-8').decode(data)
   } catch (error) {
     console.error('Error reading file:', error)
@@ -38,7 +40,7 @@ export const writeFile = async (filePath: string, content: any) => {
     const dataPath = path.join(userDataPath, filePath)
     await ensureDirectoryExists(dataPath) // 创建路径
     console.log('配置写入路径:', dataPath)
-    await fs.writeFile(dataPath, content)
+    fs.writeFileSync(dataPath, content)
   } catch (error) {
     console.error('Error writing file:', error)
   }
@@ -48,12 +50,12 @@ const ensureDirectoryExists = async (filePath: string) => {
   const dirPath = path.dirname(filePath)
   try {
     // 检查目录是否存在
-    await fs.access(dirPath, fs.constants.F_OK)
+    fs.accessSync(dirPath)
     return true
   } catch (error) {
     // 目录不存在，尝试创建目录
     try {
-      await fs.mkdir(dirPath, { recursive: true })
+      fs.mkdirSync(dirPath, { recursive: true })
       return true
     } catch (mkdirError) {
       console.error(`目录 ${dirPath} 创建失败:`, mkdirError)
@@ -67,10 +69,14 @@ export const deleteFile = async (filePath: string) => {
   const dataPath = path.join(userDataPath, filePath)
   try {
     // 检查文件是否存在
-    await fs.access(dataPath)
-    // 如果文件存在，删除它
-    await fs.unlink(dataPath)
-    console.debug(`文件 ${dataPath} 已成功删除`)
+    // fs.accessSync(dataPath)
+    fs.access(dataPath, (err) => {
+      if (!err) {
+        // 如果文件存在，删除它
+        fs.unlinkSync(dataPath)
+        console.debug(`文件 ${dataPath} 已成功删除`)
+      }
+    })
   } catch (error) {
     console.error(`删除文件 ${dataPath} 时出错:`, error)
   }
@@ -86,15 +92,15 @@ export const getFilesByExtension = async (dirPath: string, extension: string = '
   try {
     const dataPath = path.join(userDataPath, dirPath)
     // 检查目录路径是否存在
-    await fs.access(dataPath)
+    fs.accessSync(dataPath)
 
     // 读取目录下的所有文件和文件夹
-    const files = await fs.readdir(dataPath)
+    const files = await fs.readdirSync(dataPath)
     const filteredFiles: any[] = []
 
     for (const file of files) {
       const filePath = path.join(dataPath, file)
-      const fileStat = await fs.stat(filePath)
+      const fileStat = fs.statSync(filePath)
       // 如果是文件并且后缀名匹配
       if (fileStat.isFile() && path.extname(file) === extension) {
         filteredFiles.push(file)
@@ -232,7 +238,7 @@ export const execCli = async (cmd: string) => {
       const exist = await exeExist(binPath + ' -V')
       if (!exist) {
         console.error('easytier-cli不存在或无可执行权限')
-        resolve(false)
+        resolve(403)
         return
       }
       console.log('执行命令:', command)
@@ -256,7 +262,14 @@ export const exeCmd = async (execPath: string) => {
   return new Promise(async (resolve, reject) => {
     try {
       const dirPath = path.dirname(execPath)
-      await fs.access(dirPath)
+      // fs.accessSync(dirPath)
+      fs.access(dirPath, (err) => {
+        if (err) {
+          console.debug('文件不存在')
+          resolve(false)
+          return
+        }
+      })
       exec(execPath, (error, stdout) => {
         if (error) {
           console.error('执行出错:', error.message)
@@ -276,10 +289,7 @@ export const exeExist = (execPath: string) => {
   return new Promise((resolve, reject) => {
     try {
       const dirPath = path.dirname(execPath)
-      fs.access(dirPath).catch(() => {
-        resolve(false)
-        return
-      })
+      fs.accessSync(dirPath)
       exec(execPath, (error) => {
         if (error) {
           resolve(false)
@@ -321,7 +331,15 @@ export const runChildEasyTier = async (param: string = 'config.toml') => {
     }
   })
 }
-
+/*
+'aix'
+'darwin'
+'freebsd'
+'linux'
+'openbsd'
+'sunos'
+'win32'
+ */
 export const getSysInfo = async () => {
   return new Promise((resolve, reject) => {
     try {
@@ -343,7 +361,8 @@ export const download = async (event, url: string, targetPath: string) => {
     const response = await axios({
       url,
       method: 'GET',
-      responseType: 'stream'
+      responseType: 'stream',
+      timeout: 20000
     })
     const fs = require('fs')
     const writer = fs.createWriteStream(savePath)
@@ -358,8 +377,8 @@ export const download = async (event, url: string, targetPath: string) => {
       event.reply('download-error', err.message)
     })
   } catch (err) {
-    console.error('下载出错', err)
-    event.reply('download-error', err)
+    console.error('下载出错', err.message)
+    event.reply('download-error', err.message)
   }
 }
 
@@ -401,5 +420,182 @@ export const unZipFile = (src: string, dest: string, callBack: (_?: any) => void
       // DeleteFile(src);
       callBack?.()
     }
+  })
+}
+
+// Windows 安装指定程序为系统服务
+export const installServiceOnWindows = async (
+  serviceName: string,
+  programPath: string,
+  args: string
+) => {
+  return new Promise((resolve, reject) => {
+    const command = `sc create ${serviceName} binPath= "${programPath} -c ${args}" displayname= "EasyTier 组网" start= auto type= share error= ignore`
+    console.log('Windows 安装服务:', command)
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error installing service: ${error.message}`)
+        resolve(false)
+        return
+      }
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`)
+        resolve(false)
+        return
+      }
+      console.log(`Service installed: ${stdout}`)
+      resolve(true)
+    })
+  })
+}
+
+// Windows 删除服务
+export const uninstallServiceOnWindows = (serviceName: string) => {
+  return new Promise((resolve, reject) => {
+    const command = `sc delete ${serviceName}`
+    console.log('Windows 删除服务:', command)
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error uninstalling service: ${error.message}`)
+        resolve(false)
+        return
+      }
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`)
+        resolve(false)
+        return
+      }
+      console.log(`Service uninstalled: ${stdout}`)
+      resolve(true)
+    })
+  })
+}
+
+// Linux 安装指定程序为系统服务
+export const installServiceOnLinux = (serviceName: string, programPath: string, args: string) => {
+  return new Promise((resolve, reject) => {
+    const serviceContent = `
+[Unit]
+Description=${serviceName}
+
+[Service]
+ExecStart=${programPath} -c ${args}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+`
+    console.log('Linux 安装服务:', serviceContent)
+    const serviceFilePath = `/etc/systemd/system/${serviceName}.service`
+    fs.writeFileSync(serviceFilePath, serviceContent)
+    exec(
+      `systemctl enable ${serviceName} && systemctl start ${serviceName}`,
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error installing service: ${error.message}`)
+          resolve(false)
+          return
+        }
+        if (stderr) {
+          console.error(`Stderr: ${stderr}`)
+          resolve(false)
+          return
+        }
+        console.log(`Service installed: ${stdout}`)
+        resolve(true)
+      }
+    )
+  })
+}
+
+// Linux 删除服务
+export const uninstallServiceOnLinux = (serviceName: string) => {
+  return new Promise((resolve, reject) => {
+    const command = `systemctl stop ${serviceName} && systemctl disable ${serviceName}`
+    const serviceFilePath = `/etc/systemd/system/${serviceName}.service`
+    console.log('Linux 删除服务:', command)
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error uninstalling service: ${error.message}`)
+        resolve(false)
+        return
+      }
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`)
+        resolve(false)
+        return
+      }
+      console.log(`Service stopped and disabled: ${stdout}`)
+      fs.unlinkSync(serviceFilePath)
+      console.log(`Service file removed: ${serviceFilePath}`)
+      resolve(true)
+    })
+  })
+}
+
+// macOS 安装指定程序为系统服务
+export const installServiceOnMacOS = (serviceName: string, programPath: string, args: string) => {
+  return new Promise((resolve, reject) => {
+    const serviceContent = `
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>${serviceName}</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>${programPath}</string>
+    <string> -c ${args}</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+</dict>
+</plist>
+`
+    console.log('macOS 安装服务:', serviceContent)
+    const serviceFilePath = `/Library/LaunchDaemons/${serviceName}.plist`
+    fs.writeFileSync(serviceFilePath, serviceContent)
+    exec(`launchctl load ${serviceFilePath}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error installing service: ${error.message}`)
+        resolve(false)
+        return
+      }
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`)
+        resolve(false)
+        return
+      }
+      console.log(`Service installed: ${stdout}`)
+      resolve(true)
+    })
+  })
+}
+
+// macOS 删除服务
+export const uninstallServiceOnMacOS = (serviceName) => {
+  return new Promise((resolve, reject) => {
+    const serviceFilePath = `/Library/LaunchDaemons/${serviceName}.plist`
+    const command = `launchctl unload ${serviceFilePath}`
+    console.log('macOS 删除服务:', command)
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error uninstalling service: ${error.message}`)
+        resolve(false)
+        return
+      }
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`)
+        resolve(false)
+        return
+      }
+      console.log(`Service unloaded: ${stdout}`)
+      fs.unlinkSync(serviceFilePath)
+      console.log(`Service file removed: ${serviceFilePath}`)
+      resolve(true)
+    })
   })
 }

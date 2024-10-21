@@ -72,6 +72,100 @@ export const getVersion = async () => {
   }
 }
 
+export const installServiceOnWindows = async (
+  serviceName: string,
+  programPath: string,
+  args: string
+) => {
+  try {
+    return await ipcRenderer.invoke('installServiceOnWindows', serviceName, programPath, args)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const uninstallServiceOnWindows = async (serviceName: string) => {
+  try {
+    return await ipcRenderer.invoke('uninstallServiceOnWindows', serviceName)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const installServiceOnLinux = async (
+  serviceName: string,
+  programPath: string,
+  args: string
+) => {
+  try {
+    return await ipcRenderer.invoke('installServiceOnLinux', serviceName, programPath, args)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const uninstallServiceOnLinux = async (serviceName: string) => {
+  try {
+    return await ipcRenderer.invoke('uninstallServiceOnLinux', serviceName)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const installServiceOnMacOS = async (
+  serviceName: string,
+  programPath: string,
+  args: string
+) => {
+  try {
+    return await ipcRenderer.invoke('installServiceOnMacOS', serviceName, programPath, args)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const uninstallServiceOnMacOS = async (serviceName) => {
+  try {
+    return await ipcRenderer.invoke('uninstallServiceOnMacOS', serviceName)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const installService = async (serviceName: string, programPath: string, args: string) => {
+  try {
+    const sysInfo = await ipcRenderer.invoke('getSysInfo')
+    if (sysInfo.osType === 'win32') {
+      return await installServiceOnWindows(serviceName, programPath, args)
+    }
+    if (sysInfo.osType === 'linux') {
+      return await installServiceOnLinux(serviceName, programPath, args)
+    }
+    if (sysInfo.osType === 'darwin') {
+      return await installServiceOnMacOS(serviceName, programPath, args)
+    }
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const uninstallService = async (serviceName: string) => {
+  try {
+    const sysInfo = await ipcRenderer.invoke('getSysInfo')
+    if (sysInfo.osType === 'win32') {
+      return await uninstallServiceOnWindows(serviceName)
+    }
+    if (sysInfo.osType === 'linux') {
+      return await uninstallServiceOnLinux(serviceName)
+    }
+    if (sysInfo.osType === 'darwin') {
+      return await uninstallServiceOnMacOS(serviceName)
+    }
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
 export const sleep = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
