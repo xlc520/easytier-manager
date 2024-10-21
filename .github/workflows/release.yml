@@ -48,7 +48,7 @@ jobs:
           path: release
 
       - name: Upload to GitHub Releases
-        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest')
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         #        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest' || (matrix.os == 'macos-latest' && env.MACOS_CERTIFICATE)
         uses: softprops/action-gh-release@v1
         with:
