@@ -5,7 +5,6 @@ import { useI18n } from '@/hooks/web/useI18n'
 import { onMounted, reactive, ref, unref } from 'vue'
 import { ElInput, ElMessage } from 'element-plus'
 import { EASYTIER_NAME, GITHUB_MIRROR_URL } from '@/constants/easytier'
-import { CircleCheck, Download, Folder, InfoFilled } from '@element-plus/icons-vue'
 import { useClipboard } from '@vueuse/core'
 import { execCli, getSysInfo, getVersion } from '@/utils/execUtil'
 import { downloadEasyTier, extractZip, getUserDataPath } from '@/utils/fileUtil'
@@ -177,9 +176,7 @@ onMounted(async () => {
         <el-descriptions-item>
           <template #label>
             <div class="cell-item">
-              <el-icon size="16px">
-                <InfoFilled />
-              </el-icon>
+              <Icon icon="ci:info" style="color: #8c8c8c" />
               {{ t('easytier.coreVersion') }}
             </div>
           </template>
@@ -188,16 +185,12 @@ onMounted(async () => {
         <el-descriptions-item>
           <template #label>
             <div class="cell-item">
-              <el-icon size="16px">
-                <Folder />
-              </el-icon>
+              <Icon icon="heroicons:folder-solid" style="color: #8c8c8c" />
               {{ t('easytier.corePath') }}
             </div>
           </template>
           {{ form.corePath }}
-          <el-icon v-if="checkCorePathSuccess" color="#67C23A" size="16px">
-            <CircleCheck />
-          </el-icon>
+          <Icon v-if="checkCorePathSuccess" icon="lets-icons:check-fill" style="color: #00bd16" />
           <br />
           <el-button type="warning" @click="checkCorePath"
             >{{ t('easytier.checkCorePath') }}
@@ -211,9 +204,7 @@ onMounted(async () => {
         <el-descriptions-item>
           <template #label>
             <div class="cell-item">
-              <el-icon size="16px">
-                <Download />
-              </el-icon>
+              <Icon icon="lsicon:download-outline" />
               {{ t('easytier.downLoadCore') }}
             </div>
           </template>
@@ -256,9 +247,7 @@ onMounted(async () => {
         <el-descriptions-item>
           <template #label>
             <div class="cell-item">
-              <el-icon size="16px">
-                <Folder />
-              </el-icon>
+              <Icon icon="icon-park-solid:log" />
               {{ t('easytier.logPath') }}
             </div>
           </template>
@@ -276,8 +265,8 @@ onMounted(async () => {
           </template>
           {{ t('easytier.githubManage') }} :
           <el-link type="primary" target="_blank"
-            >https://github.com/xlc520/easytier-manager</el-link
-          >
+            >https://github.com/xlc520/easytier-manager
+          </el-link>
           <br />
           {{ t('easytier.githubCore') }} :
           <el-link type="primary" target="_blank">https://github.com/EasyTier/EasyTier</el-link>
@@ -286,9 +275,7 @@ onMounted(async () => {
         <el-descriptions-item>
           <template #label>
             <div class="cell-item">
-              <el-icon size="16px">
-                <InfoFilled />
-              </el-icon>
+              <Icon icon="uil:info-circle" />
               {{ t('easytier.appVersion') }}
             </div>
           </template>
