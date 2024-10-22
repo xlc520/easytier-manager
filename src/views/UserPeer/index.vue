@@ -188,7 +188,6 @@ const getPeerInfo = async () => {
       break
     }
     const res = await execCli('peer')
-    console.log('res', res)
     if (res === 403) {
       ElMessageBox.alert(
         'easytier-core 或 easytier-cli 不存在或无可执行权限，请到设置页下载安装，或授予可执行权限<br><b>使用：</b><br>1.先到设置检测内核是否存在；<br>2.配置页新建组网配置；<br>3.工作台运行配置<br>组网成功后可退出管理器',
@@ -426,7 +425,7 @@ onBeforeMount(async () => {
 }
 
 .switch-color {
-  --el-switch-on-color: #03c75f;
+  --el-switch-on-color: #05b900;
   --el-switch-off-color: #ec2323;
 }
 </style>

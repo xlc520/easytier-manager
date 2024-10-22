@@ -8,6 +8,7 @@ import { Breadcrumb } from '@/components/Breadcrumb'
 import { useAppStore } from '@/store/modules/app'
 import { useDesign } from '@/hooks/web/useDesign'
 import { Icon } from '@/components/Icon'
+import { shell } from 'electron'
 
 const { getPrefixCls, variables } = useDesign()
 const prefixCls = getPrefixCls('tool-header')
@@ -33,10 +34,10 @@ const layout = computed(() => appStore.getLayout)
 const locale = computed(() => appStore.getLocale)
 
 const toDocumentEasytierManager = () => {
-  window.open('https://github.com/xlc520/easytier-manager')
+  shell.openExternal('https://github.com/xlc520/easytier-manager')
 }
 const toDocumentEasyTier = () => {
-  window.open('https://github.com/EasyTier/EasyTier')
+  shell.openExternal('https://github.com/EasyTier/EasyTier')
 }
 </script>
 

@@ -1,4 +1,4 @@
-const formData: FormData | any = {
+const defaultFormData: FormData | any = {
   hostname: '',
   instance_name: '',
   network_identity: {
@@ -12,7 +12,7 @@ const formData: FormData | any = {
   proxy_network: [{ cidr: undefined }],
   exit_nodes: [],
   rpc_portal: '0.0.0.0:15888',
-  console_logger: { level: 'info' },
+  console_logger: { level: undefined },
   file_logger: {
     level: 'warn',
     file: 'easytier',
@@ -36,4 +36,4 @@ const formData: FormData | any = {
     socks5: undefined
   }
 }
-export default { formData }
+export default { defaultFormData }

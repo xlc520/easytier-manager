@@ -15,6 +15,15 @@
 
 (可选) 5.在配置页面，安装指定配置为系统服务(经测试过Windows 11 22631.4317)
 
+### 各个包说明
+
+- `exe`：安装程序，安装后才可使用
+- `zip`：免安装，解压即可使用
+- `tar.gz` `deb` `rpm` `AppImage`：Linux系统上使用(尚未测试)
+- `easytier-manager-win_2.0.0.exe`：64、32位Windows系统通用安装包
+- `easytier-manager-win-x64_2.0.0.exe`：64位Windows系统安装包
+- `easytier-manager-win-ia32_2.0.0.exe`：32位Windows系统安装包
+
 ## 介绍
 
 EasyTier 管理器 整合Vue3 + Vite5 + Electron33 + Element-Plus， 是一个基于 `element-plus` 免费开源的中后台模版。使用了最新的`vue3`，`vite5`，`TypeScript` 等主流技术开发，开箱即用的中后台前端解决方案，可以用来作为项目的启动模版，也可用于学习参考。并且时刻关注着最新技术动向，尽可能的第一时间更新。

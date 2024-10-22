@@ -8,7 +8,7 @@ import { EASYTIER_NAME, GITHUB_MIRROR_URL } from '@/constants/easytier'
 import { useClipboard } from '@vueuse/core'
 import { execCli, getSysInfo, getVersion } from '@/utils/execUtil'
 import { downloadEasyTier, extractZip, getUserDataPath } from '@/utils/fileUtil'
-import { ipcRenderer } from 'electron'
+import { ipcRenderer, shell } from 'electron'
 import { template } from 'lodash-es'
 import log from '@/utils/logger'
 // import { getGithubVer } from '@/api/easytier'
@@ -140,6 +140,9 @@ const openLogPath = async () => {
   const { shell } = require('electron')
   await shell.openPath(path.join(userDataPath.value, 'log'))
 }
+const openInBrowser = (url: string) => {
+  shell.openExternal(url)
+}
 onMounted(async () => {
   sysInfo.value = await getSysInfo()
   userDataPath.value = await getUserDataPath()
@@ -264,12 +267,16 @@ onMounted(async () => {
             </div>
           </template>
           {{ t('easytier.githubManage') }} :
-          <el-link type="primary" target="_blank"
+          <el-link
+            type="primary"
+            @click="openInBrowser('https://github.com/xlc520/easytier-manager')"
             >https://github.com/xlc520/easytier-manager
           </el-link>
           <br />
           {{ t('easytier.githubCore') }} :
-          <el-link type="primary" target="_blank">https://github.com/EasyTier/EasyTier</el-link>
+          <el-link type="primary" @click="openInBrowser('https://github.com/EasyTier/EasyTier')">
+            https://github.com/EasyTier/EasyTier
+          </el-link>
         </el-descriptions-item>
 
         <el-descriptions-item>

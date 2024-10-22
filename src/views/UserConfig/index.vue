@@ -21,6 +21,8 @@ import {
   readFile,
   writeFile
 } from '@/utils/fileUtil'
+import { cloneDeep, isObject, mapValues } from 'lodash-es'
+import DefaultData from './components/defaultData'
 
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
@@ -35,7 +37,7 @@ const dialogTitle = ref('')
 const actionType = ref('')
 const editType = ref('')
 const saveLoading = ref(false)
-const formData = ref<FormData>(defaultData.formData)
+const formData = ref<FormData>(cloneDeep(DefaultData.defaultFormData))
 const getConfigList = async () => {
   const fileList = await getFilesByExtension('config', '.toml')
   easyTierStore.setFileList(fileList)
@@ -81,9 +83,19 @@ const AddAction = () => {
   dataConfig.value = ''
   dialogVisible.value = true
 }
+const clearObjectValues = (obj) => {
+  return mapValues(obj, (value) => {
+    if (isObject(value)) {
+      return clearObjectValues(value)
+    } else {
+      return undefined
+    }
+  })
+}
+
 const AddFormAction = () => {
   dialogTitle.value = t('easytier.addNetConfigForm')
-  formData.value = defaultData.formData
+  formData.value = cloneDeep(DefaultData.defaultFormData)
   actionType.value = 'add'
   editType.value = 'form'
   dialogVisible.value = true
@@ -99,11 +111,17 @@ const addConfigAction = async () => {
       let networkName = formData.value.network_identity?.network_name
       formData.value.file_logger.dir = path.join(await getUserDataPath(), 'log')
       formData.value.file_logger.file = networkName
-      if (formData.value.proxy_network?.length === 0) {
+      if (
+        formData.value.proxy_network?.length === 0 ||
+        formData.value.proxy_network![0].cidr === undefined
+      ) {
         formData.value.proxy_network = undefined
       }
-      if (formData.value.peer?.length === 0) {
+      if (formData.value.peer?.length === 0 || formData.value.peer![0].uri === undefined) {
         formData.value.peer = undefined
+      }
+      if (formData.value.console_logger?.level === undefined) {
+        formData.value.console_logger = undefined
       }
       await writeFile(CONFIG_PATH + '/' + networkName + '.toml', toml.stringify(formData.value))
       ElMessage.success(t('common.accessSuccess'))
@@ -212,6 +230,7 @@ const uninstallServiceHandle = async () => {
 
 onMounted(async () => {
   await getConfigList()
+  easyTierStore.setDefaultFormData(defaultData.defaultFormData)
 })
 </script>
 

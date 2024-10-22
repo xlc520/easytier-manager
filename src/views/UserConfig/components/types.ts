@@ -50,7 +50,7 @@ interface FormData {
   proxy_network: Partial<ProxyNetwork>[] | undefined | null
   exit_nodes: any[] | undefined
   rpc_portal: string
-  console_logger: Partial<ConsoleLogger>
+  console_logger: Partial<ConsoleLogger> | any
   file_logger: Partial<FileLogger>
   flags: Partial<Flags>
 }
