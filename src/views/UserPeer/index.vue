@@ -370,9 +370,7 @@ onBeforeMount(async () => {
           class="mr-2"
           size="large"
           inline-prompt
-          style="
-
---el-switch-on-color: #03c75f; --el-switch-off-color: #ec2323"
+          style="--el-switch-on-color: #03c75f; --el-switch-off-color: #ec2323"
           :active-text="t('easytier.running')"
           :inactive-text="t('easytier.stopping')"
           disabled
