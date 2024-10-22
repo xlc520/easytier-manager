@@ -130,24 +130,28 @@ watch(
 )
 
 const getConfigList = async () => {
-  const fileList = await getFilesByExtension('config', '.toml')
-  easyTierStore.setFileList(fileList)
-  let tmpList: any = []
-  let tmpList2: any = []
-  let tmpList3: any = []
-  fileList.forEach((f: string) => {
-    const fileName = f.replace('.toml', '')
-    tmpList.push({ network_name: fileName })
-    tmpList3.push({ value: fileName, label: fileName })
-    tmpList2.push(fileName)
-  })
-  easyTierStore.setConfigList(tmpList)
-  easyTierStore.setFileListNoSuffix(tmpList2)
-  easyTierStore.setAllConfigOptions(tmpList3)
-  allConfigOptions.value = tmpList3
-  // allConfigOptions[1].options = tmpList3
-  // todo 使用上次的配置
-  currentNodeKey.value = tmpList[0].network_name
+  try {
+    const fileList = await getFilesByExtension('config', '.toml')
+    easyTierStore.setFileList(fileList)
+    let tmpList: any = []
+    let tmpList2: any = []
+    let tmpList3: any = []
+    fileList.forEach((f: string) => {
+      const fileName = f.replace('.toml', '')
+      tmpList.push({ network_name: fileName })
+      tmpList3.push({ value: fileName, label: fileName })
+      tmpList2.push(fileName)
+    })
+    easyTierStore.setConfigList(tmpList)
+    easyTierStore.setFileListNoSuffix(tmpList2)
+    easyTierStore.setAllConfigOptions(tmpList3)
+    allConfigOptions.value = tmpList3
+    // allConfigOptions[1].options = tmpList3
+    // todo 使用上次的配置
+    currentNodeKey.value = tmpList[0].network_name
+  } catch (e) {
+    log.error('获取配置异常' + e)
+  }
 }
 const getNodeInfo = async () => {
   const maxRetry = 10
@@ -184,11 +188,10 @@ const getPeerInfo = async () => {
       break
     }
     const res = await execCli('peer')
+    console.log('res', res)
     if (res === 403) {
-      easyTierStore.setStopLoop(true)
       ElMessageBox.alert(
-        'easytier-core 或 easytier-cli 不存在或无可执行权限，请到设置页下载安装，或授予可执行权限<br>' +
-          '<b>使用：</b><br>1.先到设置检测内核是否存在；<br>2.配置页新建组网配置；<br>3.工作台运行配置<br>组网成功后可退出管理器',
+        'easytier-core 或 easytier-cli 不存在或无可执行权限，请到设置页下载安装，或授予可执行权限<br><b>使用：</b><br>1.先到设置检测内核是否存在；<br>2.配置页新建组网配置；<br>3.工作台运行配置<br>组网成功后可退出管理器',
         t('common.reminder'),
         {
           confirmButtonText: t('common.ok'),
@@ -196,6 +199,7 @@ const getPeerInfo = async () => {
           dangerouslyUseHTMLString: true
         }
       )
+      easyTierStore.setStopLoop(true)
       continue
     }
     if (!res) {
@@ -233,7 +237,7 @@ const getPeerInfo = async () => {
 }
 
 const startAction = async () => {
-  log.log('开始运行配置:', currentNodeKey.value)
+  log.log('开始运行配置:' + currentNodeKey.value)
   await runChildEasyTier(currentNodeKey.value + '.toml')
     .then((res) => {
       if (!res) {
@@ -265,7 +269,7 @@ const startAction = async () => {
     })
 }
 const stopAction = async () => {
-  log.log('停止运行配置:', currentNodeKey.value)
+  log.log('停止运行配置:' + currentNodeKey.value)
   const p = await isRunProcess()
   if (p && p.commandLine) {
     await killProcess(p.pid)
@@ -288,8 +292,8 @@ const viewLogAction = async () => {
 }
 const refreshAction = async () => {
   await getConfigList()
-  getNodeInfo()
   getPeerInfo()
+  getNodeInfo()
   ElMessage.info('已刷新')
 }
 // 是则返回进程信息，不是则 undefined
@@ -324,14 +328,10 @@ const currentNodeKeyChange = async () => {
   await getList()
 }
 onBeforeMount(async () => {
-  try {
-    await getConfigList()
-    getNodeInfo()
-    getPeerInfo()
-    currentNodeKeyChange()
-  } catch (e) {
-    log.debug('获取配置异常', e)
-  }
+  await getConfigList()
+  getNodeInfo()
+  getPeerInfo()
+  currentNodeKeyChange()
 })
 </script>
 
@@ -367,12 +367,9 @@ onBeforeMount(async () => {
         </ElSelect>
         <el-switch
           v-model="runningTag"
-          class="mr-2"
+          class="mr-2 switch-color"
           size="large"
           inline-prompt
-          style="
-
---el-switch-on-color: #03c75f; --el-switch-off-color: #ec2323"
           :active-text="t('easytier.running')"
           :inactive-text="t('easytier.stopping')"
           disabled
@@ -426,5 +423,10 @@ onBeforeMount(async () => {
 <style lang="less">
 .@{elNamespace}-dialog {
   --el-dialog-width: 70%;
+}
+
+.switch-color {
+  --el-switch-on-color: #03c75f;
+  --el-switch-off-color: #ec2323;
 }
 </style>
