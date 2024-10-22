@@ -5,6 +5,7 @@ on:
 
 jobs:
   build:
+    if: contains('["xlc520"]', github.actor)
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -52,6 +53,7 @@ jobs:
         #        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest' || (matrix.os == 'macos-latest' && env.MACOS_CERTIFICATE)
         uses: softprops/action-gh-release@v1
         with:
+          draft: true
           files: |
             release/*.exe
             release/*.zip
@@ -60,4 +62,5 @@ jobs:
             release/*.tar.gz
             release/*.rpm
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+#          GH_TOKEN: ${{ secrets.GH_TOKEN }}
