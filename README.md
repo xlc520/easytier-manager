@@ -1,21 +1,23 @@
 <div align="center">  <img width="100" src="./public/logo.png"> <br> <br>
 <h1>EasyTier 管理器 组网 内网穿透</h1>
-<h3>vue3 + vite + electron + element-plus</h3>
+<h3>Vue3 + Vite5 + Electron33 + Element-Plus</h3>
 </div>
 
 ## 使用教程
 
-1.设置页 检测内核是否存在 （仅首次使用需要，后续确认存在即可直接运行）
+**(重要) 1.设置页 检测内核是否存在，若不存在则下载内核，然后安装，再次检测内核是否存在**（仅首次使用需要，后续确认存在即可直接运行）
 
 2.配置页新建组网配置，提供直接编辑代码的方式，和表单填写
 
 3.工作台（首页）运行指定配置
 
+(可选) 4.组网成功后，连接没有问题可退出管理器(托盘图标右键`退出`)
+
+(可选) 5.在配置页面，安装指定配置为系统服务(经测试过Windows 11 22631.4317)
+
 ## 介绍
 
-EasyTier 管理器 整合vue3 + vite5 + element-plus + electron， 是一个基于 `element-plus`
-免费开源的中后台模版。使用了最新的`vue3`，`vite5`，`TypeScript`
-等主流技术开发，开箱即用的中后台前端解决方案，可以用来作为项目的启动模版，也可用于学习参考。并且时刻关注着最新技术动向，尽可能的第一时间更新。
+EasyTier 管理器 整合Vue3 + Vite5 + Electron33 + Element-Plus， 是一个基于 `element-plus` 免费开源的中后台模版。使用了最新的`vue3`，`vite5`，`TypeScript` 等主流技术开发，开箱即用的中后台前端解决方案，可以用来作为项目的启动模版，也可用于学习参考。并且时刻关注着最新技术动向，尽可能的第一时间更新。
 
 ## 特性
 
@@ -48,13 +50,13 @@ EasyTier 管理器 整合vue3 + vite5 + element-plus + electron， 是一个基�
 - 获取代码
 
 ```bash
-git clone 
+git clone
 ```
 
 - 安装依赖
 
 ```bash
-cd 
+cd
 
 pnpm install
 
@@ -69,15 +71,18 @@ pnpm run dev
 - 打包
 
   1.编译
-    ```bash
-    pnpm run build:compile
-    ```
+
+  ```bash
+  pnpm run build:compile
+  ```
+
   2.打包各个平台
-    ```bash
-    pnpm run build:win
-    pnpm run build:linux
-    pnpm run build:mac
-    ```
+
+  ```bash
+  pnpm run build:win
+  pnpm run build:linux
+  pnpm run build:mac
+  ```
 
 ## 更新日志
 
