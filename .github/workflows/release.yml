@@ -11,7 +11,9 @@ jobs:
       matrix:
         os: [ windows-latest, ubuntu-latest ]
     #        os: [ windows-latest, ubuntu-latest, macos-latest ]
-
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -54,6 +56,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
+          fail_on_unmatched_files: false
           files: |
             release/*.exe
             release/*.zip
@@ -61,6 +64,3 @@ jobs:
             release/*.AppImage
             release/*.tar.gz
             release/*.rpm
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-#          GH_TOKEN: ${{ secrets.GH_TOKEN }}
