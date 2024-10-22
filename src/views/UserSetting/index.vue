@@ -9,7 +9,7 @@ import { useClipboard } from '@vueuse/core'
 import { execCli, getSysInfo, getVersion } from '@/utils/execUtil'
 import { downloadEasyTier, extractZip, getUserDataPath } from '@/utils/fileUtil'
 import { ipcRenderer } from 'electron'
-import _ from 'lodash'
+import { template } from 'lodash-es'
 import log from '@/utils/logger'
 // import { getGithubVer } from '@/api/easytier'
 
@@ -149,7 +149,7 @@ onMounted(async () => {
   }
   form.corePath = path.join(userDataPath.value, 'bin')
   form.appVersion = await getVersion()
-  const winUrlTemplate = _.template(EASYTIER_NAME)
+  const winUrlTemplate = template(EASYTIER_NAME)
   // easytier-windows-x86_64-v2.0.3.zip
   // easytier-win32-x64-v2.0.3.zip
   fileName.value = winUrlTemplate({
