@@ -1,4 +1,4 @@
-name: Release
+name: Release Windows
 
 on:
   workflow_dispatch:
@@ -8,6 +8,8 @@ jobs:
     if: contains('["xlc520"]', github.actor)
     permissions:
       contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -38,8 +40,6 @@ jobs:
 
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           draft: true
           fail_on_unmatched_files: false

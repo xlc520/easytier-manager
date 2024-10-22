@@ -10,3 +10,5 @@ release
 .idea
 dist-electron
 tmp
+.npmrc
+components.d.ts

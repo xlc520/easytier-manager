@@ -6,13 +6,14 @@ on:
 jobs:
   build:
     if: contains('["xlc520"]', github.actor)
+    permissions:
+      contents: write
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ windows-latest, ubuntu-latest ]
     #        os: [ windows-latest, ubuntu-latest, macos-latest ]
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Checkout repository
