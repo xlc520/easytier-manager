@@ -63,7 +63,7 @@
     "electron-log": "5.2.0",
     "element-plus": "2.8.6",
     "intro.js": "^7.2.0",
-    "lodash-es": "^4.17.21",
+    "lodash": "^4.17.21",
     "mitt": "^3.0.1",
     "monaco-editor": "^0.52.0",
     "nprogress": "^0.2.0",

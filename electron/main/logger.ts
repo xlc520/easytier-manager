@@ -9,8 +9,6 @@ import { app } from 'electron'
 log.transports.file.level = 'info'
 // 日志控制台等级，默认值：false
 log.transports.console.level = 'info'
-// 日志文件名，默认：main.log
-// log.transports.file.fileName = 'main.log'
 // 日志格式，默认：[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}]{scope} {text}
 log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}]{scope} {text}'
 // 日志大小，默认：1048576（10M），达到最大上限后，备份文件并重命名为：main.old.log，有且仅有一个备份文件
@@ -23,21 +21,30 @@ const dateStr = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.ge
 // 文件名为：年-月-日.log
 // 自定义文件保存位置为安装目录下 \log\年-月-日.log
 const fileName = 'easytier-manager-' + dateStr + '.log'
+// 日志文件名，默认：main.log
+log.transports.file.fileName = fileName
 const logDirPath = path.join(app.getPath('userData'), 'log')
 const exist = fs.existsSync(logDirPath)
-log.transports.file.resolvePathFn = (vars, message) => {
-  if (!exist) {
-    fs.mkdir(logDirPath, function (e) {
-      if (!e) {
-        return path.join(logDirPath, fileName)
-      } else {
-        log.error('创建文件夹失败' + logDirPath + ',e:' + e)
-      }
-    })
-  } else {
-    return path.join(logDirPath, fileName)
+if (!exist) {
+  log.transports.file.resolvePathFn = (variables, message) => {
+    return path.join(logDirPath, variables.fileName)
   }
 }
+
+// log.transports.file.resolvePathFn = (vars, message) => {
+//   if (!exist) {
+//     fs.mkdir(logDirPath, function (e) {
+//       if (!e) {
+//         return path.join(logDirPath, fileName)
+//       } else {
+//         log.error('创建文件夹失败' + logDirPath + ',e:' + e)
+//         return
+//       }
+//     })
+//   } else {
+//     return path.join(logDirPath, fileName)
+//   }
+// }
 
 // 覆盖consloe.log
 // 有时electron-log替代consloe.log是很有用的，如下：
