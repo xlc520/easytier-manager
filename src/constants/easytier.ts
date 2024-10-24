@@ -2,7 +2,8 @@
  * 配置目录
  */
 export const CONFIG_PATH = 'config'
-export const LOG_PATH = 'log'
+export const LOG_PATH = 'logs'
+export const BIN_PATH = 'bin'
 /**
  * 配置文件名
  */

@@ -639,6 +639,7 @@ export default {
     downLoadError: '下载失败!',
     coreEror: '内核不存在或无可执行权限！',
     logPath: '日志目录',
+    appLogLevel: '管理器日志级别',
     openLogPath: '打开日志目录',
     openCorePath: '打开内核目录',
     copyLogPath: '复制日志目录',
@@ -651,6 +652,9 @@ export default {
     installServiceLinux: '安装Linux服务',
     uninstallServiceLinux: '卸载Linux服务',
     installServiceMacOS: '安装MacOS服务',
-    uninstallServiceMacOS: '卸载MacOS服务'
+    uninstallServiceMacOS: '卸载MacOS服务',
+    startService: '启动服务',
+    stopService: '停止服务',
+    checkUpdate: '检测更新'
   }
 }

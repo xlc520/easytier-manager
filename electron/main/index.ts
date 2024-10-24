@@ -11,17 +11,11 @@
 
 import { app, BrowserWindow, ipcMain, shell, Menu, nativeImage, Tray } from 'electron'
 import { release } from 'os'
-import path, { join } from 'path'
+import { join } from 'path'
 import * as mainUtil from './mainUtil'
 import log from './logger'
-import {
-  installServiceOnLinux,
-  installServiceOnMacOS,
-  installServiceOnWindows,
-  uninstallServiceOnLinux,
-  uninstallServiceOnMacOS,
-  uninstallServiceOnWindows
-} from './mainUtil'
+import updater from './updater'
+import { checkServiceInstallWin, startServiceHandle, stopServiceHandle } from './mainUtil'
 
 process.env.DIST_ELECTRON = join(__dirname, '..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist')
@@ -79,6 +73,9 @@ const createWindow = async () => {
   // 隐藏electron的菜单栏
   if (app.isPackaged) {
     Menu.setApplicationMenu(null)
+  } else {
+    // Open the DevTools.
+    win.webContents.openDevTools()
   }
   if (process.env.VITE_DEV_SERVER_URL) {
     // electron-vite-vue#298
@@ -136,25 +133,35 @@ const initTray = async () => {
       }
     }
   ])
-
   // 注意: 你的 contextMenu, Tooltip 和 Title 代码需要写在这里!
   tray.setContextMenu(contextMenu)
   // 工具提示和标题
   tray.setTitle(win.title)
-  tray.setToolTip(process.env.npm_package_description)
-
+  // 使用获取环境变量会导致初始化失败
+  // tray.setToolTip(process.env.npm_package_description)
+  tray.setToolTip('EasyTier 管理器')
   // 监听任务栏图标的单击、双击事件
   tray.on('click', () => {
-    win.show()
+    if (win) {
+      if (win.isVisible()) {
+        win.hide()
+      } else {
+        win.show()
+      }
+    }
   })
+  // 双击事件
   tray.on('double-click', () => {
-    win.show()
+    if (win) {
+      win.show()
+    }
   })
 }
 
 app.whenReady().then(async () => {
   await createWindow()
   await initTray()
+  await updater.init(win)
 })
 
 app.on('window-all-closed', () => {
@@ -221,9 +228,9 @@ ipcMain.on('window-close', function () {
   }
 })
 
-ipcMain.handle('getAppDataPath', async (event, data) => app.getPath('appData'))
+ipcMain.handle('getAppDataPath', async (event) => app.getPath('appData'))
 
-ipcMain.handle('getUserDataPath', async (event, data) => app.getPath('userData'))
+ipcMain.handle('getUserDataPath', async (event) => app.getPath('userData'))
 ipcMain.handle('getVersion', async (event) => app.getVersion())
 
 ipcMain.handle('getFilesByExtension', async (event, dirPath: string, extension: string) =>
@@ -239,13 +246,19 @@ ipcMain.handle('exeCmd', async (event, param) => mainUtil.exeCmd(param))
 ipcMain.handle('execCli', async (event, param) => mainUtil.execCli(param))
 ipcMain.handle('exeExist', async (event, param) => mainUtil.exeExist(param))
 ipcMain.handle('killProcess', async (event, param) => mainUtil.killProcess(param))
-ipcMain.handle('runChildEasyTier', async (event, param) => mainUtil.runChildEasyTier(param))
+ipcMain.handle('runChildEasyTier', async (event, param) => mainUtil.runChildEasyTier(win, param))
 ipcMain.handle(
   'getRunningProcesses',
   async (event, programName): Promise<Array<any>> => mainUtil.getRunningProcesses(programName)
 )
 
 ipcMain.on('download', async (event, url, savePath) => mainUtil.download(event, url, savePath))
+ipcMain.on('quitAndInstall', async (event) => updater.quitAndInstall())
+ipcMain.on('checkForUpdatesAndNotify', async (event) => updater.checkForUpdatesAndNotify())
+ipcMain.on('setLogLevel', async (event, level) => {
+  log.setLogLevel(level)
+})
+ipcMain.handle('getLogLevel', async (event) => log.getLogLevel())
 // 处理压缩包解压
 ipcMain.handle('extractZip', async (event, fileName, targetDir) =>
   mainUtil.extractZip(event, fileName, targetDir)
@@ -267,6 +280,15 @@ ipcMain.handle('installServiceOnMacOS', async (event, serviceName, programPath, 
 )
 ipcMain.handle('uninstallServiceOnMacOS', async (event, serviceName) =>
   mainUtil.uninstallServiceOnMacOS(serviceName)
+)
+ipcMain.handle('checkServiceInstallWin', async (event, serviceName) =>
+  mainUtil.checkServiceInstallWin(serviceName)
+)
+ipcMain.handle('startServiceHandle', async (event, serviceName) =>
+  mainUtil.startServiceHandle(serviceName)
+)
+ipcMain.handle('stopServiceHandle', async (event, serviceName) =>
+  mainUtil.stopServiceHandle(serviceName)
 )
 
 // 日志

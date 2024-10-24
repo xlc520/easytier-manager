@@ -241,7 +241,7 @@ export const execCli = async (cmd: string) => {
         resolve(403)
         return
       }
-      console.log('执行命令:', command)
+      console.debug('执行命令:', command)
       exec(command, (error, stdout) => {
         if (error) {
           resolve(false)
@@ -303,7 +303,7 @@ export const exeExist = (execPath: string) => {
   })
 }
 
-export const runChildEasyTier = async (param: string = 'config.toml') => {
+export const runChildEasyTier = async (win, param: string = 'config.toml') => {
   return new Promise(async (resolve, reject) => {
     try {
       const binPath = path.join(userDataPath, 'bin', 'easytier-core')
@@ -322,6 +322,37 @@ export const runChildEasyTier = async (param: string = 'config.toml') => {
         detached: true, // 使子进程独立于父进程运行,让子进程在父进程退出后继续运行
         stdio: 'ignore' // 忽略子进程的标准输入输出
       })
+
+      // // 监听错误事件，如果无法启动子进程，则会触发此事件
+      // childProcess.on('error', (err) => {
+      //   console.error('无法启动子进程:', err)
+      //   win.webContents.send('runChildEasyTierError', '无法启动子进程:' + err)
+      // })
+      //
+      // // 当与子进程的IPC通道断开连接时会触发disconnect事件（如果使用IPC）
+      // childProcess.on('disconnect', () => {
+      //   console.log('与子进程的IPC通道已断开连接')
+      //   win.webContents.send('runChildEasyTierDisconnect', '与子进程的IPC通道已断开连接')
+      // })
+      //
+      // // 当子进程的stdio流关闭时会触发close事件
+      // childProcess.on('close', (code, signal) => {
+      //   console.log(`子进程已关闭，退出码：${code}，信号：${signal}`)
+      //   win.webContents.send(
+      //     'runChildEasyTierClose',
+      //     `子进程已关闭，退出码：${code}，信号：${signal}`
+      //   )
+      // })
+
+      // 当子进程退出时会触发exit事件
+      childProcess.on('exit', (code, signal) => {
+        console.log(`子进程已退出，退出码：${code}，信号：${signal}`)
+        win.webContents.send(
+          'runChildEasyTierExit',
+          `子进程已退出，退出码：${code}，信号：${signal}`
+        )
+      })
+
       // 使子进程独立运行
       childProcess.unref()
       resolve(true)
@@ -402,6 +433,8 @@ export const extractZip = async (event, fileName, targetDir) => {
           zip.extractEntryTo(entry, targetDir, false, true)
         }
       })
+      // 删除文件
+      fs.unlinkSync(zipPath)
       resolve(true)
     } catch (err) {
       console.error('解压失败', err)
@@ -471,6 +504,71 @@ export const uninstallServiceOnWindows = (serviceName: string) => {
   })
 }
 
+export const checkServiceInstallWin = (serviceName: string) => {
+  return new Promise((resolve, reject) => {
+    // 检测是否运行
+    const command = `sc query ${serviceName} | findstr "STATE"`
+    // 检测是否存在
+    // const command = `sc query state= all | findstr /i ${serviceName}`
+    console.log('检测服务:', command)
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error check service: ${error.message}`)
+        resolve(false)
+        return
+      }
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`)
+        resolve(false)
+        return
+      }
+      console.log(`Service check: ${stdout}`)
+      resolve(true)
+    })
+  })
+}
+export const startServiceHandle = (serviceName: string) => {
+  return new Promise((resolve, reject) => {
+    // 检测是否运行
+    const command = `net start ${serviceName}`
+    // 检测是否存在
+    console.log('启动服务:', command)
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`启动服务失败: ${error.message}`)
+        resolve(false)
+        return
+      }
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`)
+        resolve(false)
+        return
+      }
+      resolve(true)
+    })
+  })
+}
+export const stopServiceHandle = (serviceName: string) => {
+  return new Promise((resolve, reject) => {
+    // 检测是否运行
+    const command = `net stop ${serviceName}`
+    // 检测是否存在
+    console.log('关闭服务:', command)
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`关闭服务失败: ${error.message}`)
+        resolve(false)
+        return
+      }
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`)
+        resolve(false)
+        return
+      }
+      resolve(true)
+    })
+  })
+}
 // Linux 安装指定程序为系统服务
 export const installServiceOnLinux = (serviceName: string, programPath: string, args: string) => {
   return new Promise((resolve, reject) => {

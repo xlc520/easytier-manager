@@ -17,7 +17,6 @@ import { set, get } from 'lodash-es'
 import { CSSProperties } from 'vue'
 import { getSlot } from '@/utils/tsxHelper'
 import TableActions from './components/TableActions.vue'
-import { createVideoViewer } from '@/components/VideoPlayer'
 import { Icon } from '@/components/Icon'
 import { BaseButton } from '@/components/Button'
 
@@ -408,9 +407,9 @@ export default defineComponent({
               type="primary"
               icon={<Icon icon="ep:video-play" />}
               onClick={() => {
-                createVideoViewer({
-                  url
-                })
+                // createVideoViewer({
+                //   url
+                // })
               }}
             >
               预览

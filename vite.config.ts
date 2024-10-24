@@ -19,7 +19,7 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
 // 0.59以下使用下面
 // import UnoCSS from 'unocss/vite'
 const sourcemap = !!process.env.VSCODE_DEBUG
-const isBuild = process.argv.slice(2).includes('build')
+// const isBuild = process.argv.slice(2).includes('build')
 
 // https://vitejs.dev/config/
 const root = process.cwd()
@@ -127,15 +127,7 @@ export default async ({command, mode}: ConfigEnv): Promise<UserConfig> => {
                 }
             ]),
             // Use Node.js API in the Renderer-process
-            renderer({
-                nodeIntegration: true,
-                optimizeDeps: {
-                    include: [
-                        'fs/promises',
-                        'process',
-                    ],
-                },
-            }),
+            renderer(),
         ],
 
         css: {
@@ -176,7 +168,6 @@ export default async ({command, mode}: ConfigEnv): Promise<UserConfig> => {
                     manualChunks: {
                         'vue-chunks': ['vue', 'vue-router', 'pinia', 'vue-i18n'],
                         'element-plus': ['element-plus'],
-                        'wang-editor': ['@wangeditor/editor', '@wangeditor/editor-for-vue'],
                         echarts: ['echarts', 'echarts-wordcloud']
                     }
                 }

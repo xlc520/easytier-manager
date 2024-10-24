@@ -645,6 +645,7 @@ export default {
     downLoadError: 'DownLoad Error!',
     coreEror: 'Core Kernel does not exist or has no executable permission！',
     logPath: 'Log Path',
+    appLogLevel: 'App Log Level',
     openLogPath: 'Open Log Path',
     openCorePath: 'Open Core Path',
     copyLogPath: 'Copy Log Path',
@@ -655,6 +656,9 @@ export default {
     installServiceLinux: 'Install Linux Service',
     uninstallServiceLinux: 'UnInstall Linux Service',
     installServiceMacOS: 'Install MacOS Service',
-    uninstallServiceMacOS: 'UnInstall MacOS Service'
+    uninstallServiceMacOS: 'UnInstall MacOS Service',
+    startService: 'Start Service',
+    stopService: 'Stop Service',
+    checkUpdate: 'Check Update'
   }
 }

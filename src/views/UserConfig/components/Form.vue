@@ -2,7 +2,7 @@
   <div class="form">
     <el-form
       :model="formData"
-      ref="vForm"
+      ref="formRef"
       :rules="rules"
       :scroll-to-error="true"
       label-position="right"
@@ -54,88 +54,96 @@
       </el-row>
       <el-row>
         <el-col :md="24" :sm="12" :xs="12">
-          <el-form-item label="服务器(对等节点)" prop="peer">
-            <el-select
-              v-model="peers"
-              @change="peerChange"
-              clearable
-              filterable
-              allow-create
-              default-first-option
-              multiple
-            >
-              <el-option
-                v-for="(item, index) in peersOptions"
-                :key="index"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
+          <el-tooltip content="支持手动输入" placement="top">
+            <el-form-item label="服务器(对等节点)" prop="peer">
+              <el-select
+                v-model="peers"
+                @change="peerChange"
+                clearable
+                filterable
+                allow-create
+                default-first-option
+                multiple
+              >
+                <el-option
+                  v-for="(item, index) in peersOptions"
+                  :key="index"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-tooltip>
         </el-col>
       </el-row>
       <el-row>
         <el-col :md="24" :sm="12" :xs="12">
-          <el-form-item label="监听" prop="listeners">
-            <el-select
-              v-model="formData.listeners"
-              clearable
-              filterable
-              allow-create
-              default-first-option
-              multiple
-            >
-              <el-option
-                v-for="(item, index) in listenersOptions"
-                :key="index"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
+          <el-tooltip content="支持手动输入" placement="top">
+            <el-form-item label="监听" prop="listeners">
+              <el-select
+                v-model="formData.listeners"
+                clearable
+                filterable
+                allow-create
+                default-first-option
+                multiple
+              >
+                <el-option
+                  v-for="(item, index) in listenersOptions"
+                  :key="index"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-tooltip>
         </el-col>
       </el-row>
       <el-row>
         <el-col :span="24">
-          <el-form-item label="子网代理" prop="proxy_network.cidr">
-            <el-select
-              v-model="proxyNetwork"
-              @change="proxyNetworkChange"
-              clearable
-              filterable
-              allow-create
-              default-first-option
-              multiple
-            >
-              <el-option
-                v-for="(item, index) in proxy_network_cidrOptions"
-                :key="index"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
+          <el-tooltip content="支持手动输入" placement="top">
+            <el-form-item label="子网代理" prop="proxy_network.cidr">
+              <el-select
+                v-model="proxyNetwork"
+                @change="proxyNetworkChange"
+                clearable
+                filterable
+                allow-create
+                default-first-option
+                multiple
+              >
+                <el-option
+                  v-for="(item, index) in proxy_network_cidrOptions"
+                  :key="index"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-tooltip>
         </el-col>
       </el-row>
       <el-row>
         <el-col :md="24" :sm="12" :xs="12">
-          <el-form-item label="退出节点" prop="exit_nodes">
-            <el-select
-              v-model="formData.exit_nodes"
-              clearable
-              filterable
-              allow-create
-              default-first-option
-              multiple
-            >
-              <el-option
-                v-for="(item, index) in exit_nodesOptions"
-                :key="index"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
+          <el-tooltip content="支持手动输入" placement="top">
+            <el-form-item label="退出节点" prop="exit_nodes">
+              <el-select
+                v-model="formData.exit_nodes"
+                clearable
+                filterable
+                allow-create
+                default-first-option
+                multiple
+              >
+                <el-option
+                  v-for="(item, index) in exit_nodesOptions"
+                  :key="index"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-tooltip>
         </el-col>
       </el-row>
       <el-row>
@@ -298,6 +306,7 @@ const props = defineProps({
   }
 })
 const { formData } = toRefs(props)
+const formRef = ref()
 const ipv4Disabled = ref(false)
 const consoleLoggerVisible = ref(false)
 const peers = ref<Array<any>>([])
@@ -468,25 +477,33 @@ onMounted(() => {
   if (formData.value.dhcp) {
     ipv4Disabled.value = true
   }
-  if (formData.value.peer && formData.value.peer[0].uri && formData.value.peer!.length > 0) {
+  if (formData.value.peer && formData.value.peer!.length > 0 && formData.value.peer[0].uri) {
     formData.value.peer!.forEach((p) => peers.value.push(p.uri))
   }
   if (
     formData.value.proxy_network &&
-    formData.value.proxy_network[0].cidr &&
-    formData.value.proxy_network!.length > 0
+    formData.value.proxy_network!.length > 0 &&
+    formData.value.proxy_network[0].cidr
   ) {
     formData.value.proxy_network!.forEach((p) => proxyNetwork.value.push(p.cidr))
   }
 })
 const peerChange = (value: any) => {
-  formData.value.peer!.length = 0
+  if (formData.value.peer) {
+    formData.value.peer.length = 0
+  }
   value.forEach((v) => formData?.value.peer?.push({ uri: v }))
 }
 const proxyNetworkChange = (value: any) => {
-  formData.value.proxy_network!.length = 0
+  if (formData.value.proxy_network) {
+    formData.value.proxy_network.length = 0
+  }
   value.forEach((v) => formData?.value?.proxy_network?.push({ cidr: v }))
 }
+const validateForm = () => {
+  return formRef.value.validate()
+}
+defineExpose({ validateForm })
 </script>
 <style scoped>
 .form {

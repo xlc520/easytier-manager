@@ -1,7 +1,6 @@
 // logger.ts
 // 引入模块
-import log from 'electron-log'
-import fs from 'fs'
+import log, { LevelOption } from 'electron-log'
 import path from 'path'
 import { app } from 'electron'
 //设置log
@@ -23,12 +22,9 @@ const dateStr = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.ge
 const fileName = 'easytier-manager-' + dateStr + '.log'
 // 日志文件名，默认：main.log
 log.transports.file.fileName = fileName
-const logDirPath = path.join(app.getPath('userData'), 'log')
-const exist = fs.existsSync(logDirPath)
-if (!exist) {
-  log.transports.file.resolvePathFn = (variables, message) => {
-    return path.join(logDirPath, variables.fileName)
-  }
+const logDirPath = path.join(app.getPath('userData'), 'logs')
+log.transports.file.resolvePathFn = (variables, message) => {
+  return path.join(logDirPath, variables.fileName)
 }
 
 // log.transports.file.resolvePathFn = (vars, message) => {
@@ -52,6 +48,16 @@ if (!exist) {
 // 如果你想覆盖其他方法，像error，warn可以这样写：
 Object.assign(console, log.functions)
 
+// 动态更改日志级别
+const setLogLevel = (level: LevelOption) => {
+  log.transports.file.level = level
+  log.info('设置日志级别', level)
+}
+const getLogLevel = () => {
+  const level = log.transports.file.level
+  return level.valueOf()
+}
+
 // 有六个日志级别error, warn, info, verbose, debug, silly。默认是silly
 export default {
   info(param: any) {
@@ -71,5 +77,7 @@ export default {
   },
   silly(param: any) {
     log.silly(param)
-  }
+  },
+  setLogLevel,
+  getLogLevel
 }
