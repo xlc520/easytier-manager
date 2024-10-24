@@ -169,3 +169,51 @@ export const uninstallService = async (serviceName: string) => {
 export const sleep = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
+
+export const checkForUpdatesAndNotify = async () => {
+  try {
+    await ipcRenderer.send('checkForUpdatesAndNotify')
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const setLogLevel = async (level: any) => {
+  try {
+    await ipcRenderer.send('setLogLevel', level)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const getLogLevel = async () => {
+  try {
+    return await ipcRenderer.invoke('getLogLevel')
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const startServiceHandle = async (serviceName: string) => {
+  try {
+    return await ipcRenderer.invoke('startServiceHandle', serviceName)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const stopServiceHandle = async (serviceName: string) => {
+  try {
+    return await ipcRenderer.invoke('stopServiceHandle', serviceName)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}
+
+export const checkServiceInstallWin = async (serviceName: string) => {
+  try {
+    return await ipcRenderer.invoke('checkServiceInstallWin', serviceName)
+  } catch (error) {
+    log.error('异常:', error)
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "easytier-manager",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "EasyTier 管理器",
   "main": "dist-electron/main/index.js",
   "private": false,
@@ -49,8 +49,6 @@
   },
   "dependencies": {
     "@vueuse/core": "^11.1.0",
-    "@wangeditor/editor": "^5.1.23",
-    "@wangeditor/editor-for-vue": "^5.1.12",
     "@zxcvbn-ts/core": "^3.0.4",
     "adm-zip": "0.5.16",
     "animate.css": "^4.1.1",
@@ -61,6 +59,7 @@
     "echarts": "^5.5.1",
     "echarts-wordcloud": "^2.1.0",
     "electron-log": "5.2.0",
+    "electron-updater": "^6.3.9",
     "element-plus": "2.8.6",
     "intro.js": "^7.2.0",
     "lodash-es": "^4.17.21",

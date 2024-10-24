@@ -10,6 +10,8 @@ export const useEasyTierStore = defineStore('easytier', () => {
   const stopLoop = ref(false)
   // 是否 通知 全部节点建立 P2P 连接  true:通知  false:不同值
   const p2pNotify = ref(true)
+  // 启动直接报错提示
+  const errRunNotify = ref(true)
   const defaultFormData = ref()
   const setConfigList = (list) => {
     configList.value = list
@@ -32,6 +34,9 @@ export const useEasyTierStore = defineStore('easytier', () => {
   const setDefaultFormData = (data) => {
     defaultFormData.value = data
   }
+  const setErrRunNotify = (data) => {
+    errRunNotify.value = data
+  }
   return {
     configList,
     fileList,
@@ -40,12 +45,14 @@ export const useEasyTierStore = defineStore('easytier', () => {
     stopLoop,
     p2pNotify,
     defaultFormData,
+    errRunNotify,
     setConfigList,
     setFileList,
     setFileListNoSuffix,
     setAllConfigOptions,
     setStopLoop,
     setP2pNotify,
-    setDefaultFormData
+    setDefaultFormData,
+    setErrRunNotify
   }
 })

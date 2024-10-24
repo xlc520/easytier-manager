@@ -52,6 +52,13 @@ const crudSchemas = reactive<CrudSchema[]>([
     }
   },
   {
+    field: 'lat_ms',
+    label: t('easytier.lat_ms'),
+    search: {
+      hidden: true
+    }
+  },
+  {
     field: 'rx_bytes',
     label: t('easytier.rx_bytes'),
     search: {
@@ -61,13 +68,6 @@ const crudSchemas = reactive<CrudSchema[]>([
   {
     field: 'tx_bytes',
     label: t('easytier.tx_bytes'),
-    search: {
-      hidden: true
-    }
-  },
-  {
-    field: 'lat_ms',
-    label: t('easytier.lat_ms'),
     search: {
       hidden: true
     }

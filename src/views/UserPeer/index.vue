@@ -2,9 +2,8 @@
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { Table } from '@/components/Table'
-import { onBeforeMount, reactive, ref, unref, watch } from 'vue'
-import { ElMessage, ElMessageBox, ElOption, ElSelect, ElTree } from 'element-plus'
-import { deleteUserByIdApi } from '@/api/department'
+import { onBeforeMount, onMounted, reactive, ref, unref, watch } from 'vue'
+import { ElMessage, ElMessageBox, ElNotification, ElOption, ElSelect, ElTree } from 'element-plus'
 import { useTable } from '@/hooks/web/useTable'
 import { Dialog } from '@/components/Dialog'
 import { useCrudSchemas } from '@/hooks/web/useCrudSchemas'
@@ -18,6 +17,8 @@ import { parseNodeInfo, parsePeerInfo } from '@/utils/easyTierUtil'
 import { Descriptions, DescriptionsSchema } from '@/components/Descriptions'
 import log from '@/utils/logger'
 import MonacoEditor from '@/components/monaco-editor'
+import { notify } from '@/utils/notifyUtil'
+import { ipcRenderer } from 'electron'
 import {
   execCli,
   getRunningProcesses,
@@ -25,7 +26,6 @@ import {
   runChildEasyTier,
   sleep
 } from '@/utils/execUtil'
-import { notify } from '@/utils/notifyUtil'
 
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
@@ -41,8 +41,7 @@ const { tableRegister, tableState, tableMethods } = useTable({
     }
   },
   fetchDelApi: async () => {
-    const res = await deleteUserByIdApi(unref(ids))
-    return !!res
+    return false
   }
 })
 const { total, loading, dataList, pageSize, currentPage } = tableState
@@ -51,7 +50,6 @@ const { getList } = tableMethods
 const { allSchemas } = useCrudSchemas(crudSchemas)
 
 const logDialogVisible = ref(false)
-const stopDisabled = ref(false)
 const descriptionCollapse = ref(false)
 const runningTag = ref(false)
 const logData = ref('')
@@ -59,7 +57,6 @@ const nodeInfo = ref({})
 const peerInfo = ref<PeerInfo[]>([])
 const treeEl = ref<typeof ElTree>()
 const dialogTitle = ref('')
-const ids = ref<string[]>([])
 const currentNodeKey = ref('')
 const currentDepartment = ref('')
 const allConfigOptions = ref([
@@ -138,7 +135,7 @@ const getConfigList = async () => {
     let tmpList3: any = []
     fileList.forEach((f: string) => {
       const fileName = f.replace('.toml', '')
-      tmpList.push({ network_name: fileName })
+      tmpList.push({ configFileName: fileName })
       tmpList3.push({ value: fileName, label: fileName })
       tmpList2.push(fileName)
     })
@@ -148,7 +145,9 @@ const getConfigList = async () => {
     allConfigOptions.value = tmpList3
     // allConfigOptions[1].options = tmpList3
     // todo 使用上次的配置
-    currentNodeKey.value = tmpList[0].network_name
+    if (tmpList && tmpList[0]) {
+      currentNodeKey.value = tmpList[0].configFileName
+    }
   } catch (e) {
     log.error('获取配置异常' + e)
   }
@@ -249,11 +248,10 @@ const startAction = async () => {
         })
         return
       }
-      stopDisabled.value = false
-      easyTierStore.setStopLoop(false)
-      easyTierStore.setP2pNotify(true)
       getNodeInfo()
       getPeerInfo()
+      easyTierStore.setStopLoop(false)
+      easyTierStore.setP2pNotify(true)
       descriptionCollapse.value = true
       runningTag.value = true
     })
@@ -266,9 +264,11 @@ const startAction = async () => {
         confirmButtonText: t('common.ok')
       })
     })
+    .finally(() => currentNodeKeyChange())
 }
 const stopAction = async () => {
   log.log('停止运行配置:' + currentNodeKey.value)
+  easyTierStore.setErrRunNotify(false)
   const p = await isRunProcess()
   if (p && p.commandLine) {
     await killProcess(p.pid)
@@ -276,6 +276,7 @@ const stopAction = async () => {
     ElMessage.success(t('common.accessSuccess'))
   }
   easyTierStore.setStopLoop(true)
+  currentNodeKeyChange()
 }
 const reset = async () => {
   nodeInfo.value = {}
@@ -290,9 +291,16 @@ const viewLogAction = async () => {
   logDialogVisible.value = true
 }
 const refreshAction = async () => {
-  await getConfigList()
-  getPeerInfo()
-  getNodeInfo()
+  const p = await isRunProcess()
+  if (p && p.commandLine) {
+    runningTag.value = true
+    easyTierStore.setStopLoop(false)
+    getNodeInfo()
+    getPeerInfo()
+    await getList()
+  } else {
+    runningTag.value = false
+  }
   ElMessage.info('已刷新')
 }
 // 是则返回进程信息，不是则 undefined
@@ -311,6 +319,7 @@ const isRunProcess = async () => {
   return undefined
 }
 const currentNodeKeyChange = async () => {
+  easyTierStore.setErrRunNotify(true)
   const p = await isRunProcess()
   if (p && p.commandLine) {
     runningTag.value = true
@@ -324,6 +333,7 @@ const currentNodeKeyChange = async () => {
   peerInfo.value.length = 0
   descriptionCollapse.value = false
   runningTag.value = false
+  easyTierStore.setStopLoop(true)
   await getList()
 }
 onBeforeMount(async () => {
@@ -331,6 +341,25 @@ onBeforeMount(async () => {
   getNodeInfo()
   getPeerInfo()
   currentNodeKeyChange()
+})
+onMounted(() => {
+  ipcRenderer.on('runChildEasyTierExit', () => {
+    if (easyTierStore.errRunNotify) {
+      ElNotification({
+        title: t('common.reminder'),
+        message: '启动异常，请检查配置文件是否正确，或是否重复启动',
+        type: 'error',
+        duration: 8000
+      })
+    }
+  })
+  // ipcRenderer.on('update-message', (_event, arg) => {
+  //   ElNotification({
+  //     title: t('common.reminder'),
+  //     message: arg,
+  //     type: 'info'
+  //   })
+  // })
 })
 </script>
 
@@ -380,8 +409,10 @@ onBeforeMount(async () => {
             <span class="custom-inactive-action">×</span>
           </template>
         </el-switch>
-        <BaseButton type="success" @click="startAction">{{ t('easytier.startNet') }}</BaseButton>
-        <BaseButton type="danger" :disabled="stopDisabled" @click="stopAction"
+        <BaseButton type="success" @click="startAction" :disabled="runningTag"
+          >{{ t('easytier.startNet') }}
+        </BaseButton>
+        <BaseButton type="danger" @click="stopAction" :disabled="!runningTag"
           >{{ t('easytier.stopNet') }}
         </BaseButton>
         <BaseButton type="info" @click="viewLogAction">{{ t('easytier.view_log') }}</BaseButton>

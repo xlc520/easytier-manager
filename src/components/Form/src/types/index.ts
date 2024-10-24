@@ -20,8 +20,6 @@ import {
   ISelectProps,
   UploadProps
 } from 'element-plus'
-import { IEditorConfig } from '@wangeditor/editor'
-import { JsonEditorProps } from '@/components/JsonEditor'
 import { IAgreeProps } from '@/components/IAgree'
 import { CSSProperties } from 'vue'
 
@@ -53,10 +51,8 @@ export enum ComponentNameEnum {
   TIME_SELECT = 'TimeSelect',
   SELECT_V2 = 'SelectV2',
   INPUT_PASSWORD = 'InputPassword',
-  EDITOR = 'Editor',
   TREE_SELECT = 'TreeSelect',
   UPLOAD = 'Upload',
-  JSON_EDITOR = 'JsonEditor',
   ICON_PICKER = 'IconPicker',
   I_AGREE = 'IAgree'
 }
@@ -124,6 +120,7 @@ export interface SelectOption {
   value?: any
   key?: string | number
   options?: SelectOption[]
+
   [key: string]: any
 }
 
@@ -281,8 +278,10 @@ export interface RadioOption {
   border?: boolean
   size?: ComponentSize
   name?: string
+
   [key: string]: any
 }
+
 export interface RadioGroupComponentProps extends Partial<RadioGroupProps> {
   options?: RadioOption[]
   /**
@@ -336,6 +335,7 @@ export interface CheckboxOption {
   tabindex?: number | string
   id?: string
   controls?: boolean
+
   [key: string]: any
 }
 
@@ -482,11 +482,6 @@ export interface TimeSelectComponentProps {
   style?: CSSProperties
 }
 
-export interface EditorComponentProps {
-  editorConfig?: IEditorConfig
-  style?: CSSProperties
-}
-
 export interface ColProps {
   span?: number
   xs?: number
@@ -625,7 +620,6 @@ export interface FormSchema {
     | InputPasswordComponentProps
     | TreeSelectComponentProps
     | UploadComponentProps
-    | JsonEditorProps
     | IAgreeProps
     | any
 
@@ -666,5 +660,6 @@ export interface FormProps extends Partial<ElFormProps> {
   model?: Recordable
   autoSetPlaceholder?: boolean
   isCustom?: boolean
+
   [key: string]: any
 }
