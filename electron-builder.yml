@@ -6,9 +6,9 @@ productName: easytier-manager
 # 版权信息
 copyright: 'Copyright ©2024-present easytier-manager'
 # 应用版本
-buildVersion: 2.1.0
+buildVersion: 2.1.1
 # 内部版本
-buildNumber: 210
+buildNumber: 211
 asar: true
 # normal
 #compression: store
