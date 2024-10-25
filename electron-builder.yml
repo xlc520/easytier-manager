@@ -6,9 +6,9 @@ productName: easytier-manager
 # 版权信息
 copyright: 'Copyright ©2024-present easytier-manager'
 # 应用版本
-buildVersion: 2.1.0
+buildVersion: 2.1.1
 # 内部版本
-buildNumber: 210
+buildNumber: 211
 asar: true
 # normal
 #compression: store
@@ -38,7 +38,7 @@ win:
         - ia32
 # macOS 平台的打包设置，包括目标架构和图标
 mac:
-  # icon: build/icons/icon.icns
+  icon: 'src/assets/imgs/logo@512.png'
   hardenedRuntime: true
   darkModeSupport: true
   gatekeeperAssess: true
@@ -84,9 +84,9 @@ publish:
   #  url: http://your-update-server.com/updates/
 
 # 额外包含的文件
-#extraFiles:
-#  - from: build
-#    to: '${appOutDir}/resources'
+extraFiles:
+  - from: lib
+    to: lib
 #    filter:
 #      - 'icons/*'
 

@@ -64,7 +64,7 @@ const init = async (mainWindow) => {
   })
 
   autoUpdater.on('update-not-available', (info) => {
-    log.info('暂无更新' + JSON.stringify(info))
+    log.info('暂无更新')
     mainWindow?.webContents.send('update-message', '暂无更新.')
   })
 

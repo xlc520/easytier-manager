@@ -194,25 +194,25 @@ export const getLogLevel = async () => {
   }
 }
 
-export const startServiceHandle = async (serviceName: string) => {
+export const startServiceOnWindows = async (serviceName: string) => {
   try {
-    return await ipcRenderer.invoke('startServiceHandle', serviceName)
+    return await ipcRenderer.invoke('startServiceOnWindows', serviceName)
   } catch (error) {
     log.error('异常:', error)
   }
 }
 
-export const stopServiceHandle = async (serviceName: string) => {
+export const stopServiceOnWindows = async (serviceName: string) => {
   try {
-    return await ipcRenderer.invoke('stopServiceHandle', serviceName)
+    return await ipcRenderer.invoke('stopServiceOnWindows', serviceName)
   } catch (error) {
     log.error('异常:', error)
   }
 }
 
-export const checkServiceInstallWin = async (serviceName: string) => {
+export const checkServiceOnWindows = async (serviceName: string) => {
   try {
-    return await ipcRenderer.invoke('checkServiceInstallWin', serviceName)
+    return await ipcRenderer.invoke('checkServiceOnWindows', serviceName)
   } catch (error) {
     log.error('异常:', error)
   }
