@@ -13,7 +13,7 @@ asar: true
 # normal
 #compression: store
 icon: 'src/assets/imgs/logo.png'
-artifactName: '${productName}-${os}-${arch}_${version}.${ext}'
+artifactName: '${productName}-${os}7-${arch}_${version}.${ext}'
 # 指定打包输出目录和构建资源目录
 directories:
   output: release
