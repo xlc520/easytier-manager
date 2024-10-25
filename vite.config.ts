@@ -167,8 +167,7 @@ export default async ({command, mode}: ConfigEnv): Promise<UserConfig> => {
                 output: {
                     manualChunks: {
                         'vue-chunks': ['vue', 'vue-router', 'pinia', 'vue-i18n'],
-                        'element-plus': ['element-plus'],
-                        echarts: ['echarts', 'echarts-wordcloud']
+                        'element-plus': ['element-plus']
                     }
                 }
             },
@@ -204,13 +203,13 @@ export default async ({command, mode}: ConfigEnv): Promise<UserConfig> => {
                 'qs',
                 // 'echarts',
                 // 'echarts-wordcloud',
-                'qrcode',
+                // 'qrcode',
                 // '@wangeditor/editor',
                 // '@wangeditor/editor-for-vue',
                 'vue-json-pretty',
                 '@zxcvbn-ts/core',
-                'dayjs',
-                'cropperjs'
+                // 'dayjs',
+                // 'cropperjs'
             ]
         }
     }

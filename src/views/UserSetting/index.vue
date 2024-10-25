@@ -17,7 +17,6 @@ import {
 import { downloadEasyTier, extractZip, getUserDataPath } from '@/utils/fileUtil'
 import { ipcRenderer, shell } from 'electron'
 import { template } from 'lodash-es'
-import log from '@/utils/logger'
 // import { getGithubVer } from '@/api/easytier'
 
 const { t } = useI18n()
@@ -26,6 +25,8 @@ const sysInfo = ref<SysInfo>({ osArch: '', osType: '', osVersion: '' })
 const userDataPath = ref('')
 const fileName = ref('')
 const downLoadSuccess = ref(false)
+const downLoadSuccessNotify = ref(true)
+const downLoadErrorNotify = ref(true)
 const checkCorePathSuccess = ref(false)
 const form = reactive({
   corePath: '',
@@ -92,26 +93,18 @@ const downLoadCore = async () => {
       type: 'info',
       duration: 2000
     })
+    downLoadSuccessNotify.value = true
+    downLoadErrorNotify.value = true
     await downloadEasyTier(fileName.value, mirror.value)
-    if (mirror.value == GITHUB_MIRROR_URL[-1].value) {
+    if (mirror.value === GITHUB_MIRROR_URL[-1].value) {
       // 使用默认链接
+      ElNotification({
+        title: '下载中',
+        message: '开始使用官方下载',
+        type: 'info',
+        duration: 2000
+      })
       await downloadEasyTier(fileName.value, mirror.value)
-        .then(() => {
-          log.info('下载成功:' + fileName.value)
-          // ElNotification({
-          //   title: '下载成功',
-          //   message: '恭喜你，内核下载成功！',
-          //   type: 'success'
-          // })
-        })
-        .catch(() => {
-          log.error('所有加速都下载失败，请手动下载替换或者魔法！')
-          ElNotification({
-            title: '下载失败',
-            message: '所有加速都下载失败，请手动下载替换或者魔法！',
-            type: 'error'
-          })
-        })
     }
   }
 }
@@ -137,6 +130,8 @@ const checkCorePath = async () => {
     form.coreVersion = ver
     checkCorePathSuccess.value = true
   } else {
+    form.coreVersion = ''
+    checkCorePathSuccess.value = false
     ElNotification({
       title: t('common.reminder'),
       message: t('easytier.coreEror'),
@@ -219,18 +214,24 @@ onMounted(async () => {
   })
   ipcRenderer.on('download-complete', () => {
     downLoadSuccess.value = true
-    ElNotification({
-      title: t('common.reminder'),
-      message: t('easytier.downLoadSuccess'),
-      type: 'success'
-    })
+    if (downLoadSuccessNotify.value) {
+      ElNotification({
+        title: t('common.reminder'),
+        message: t('easytier.downLoadSuccess'),
+        type: 'success'
+      })
+    }
+    downLoadSuccessNotify.value = false
   })
   ipcRenderer.on('download-error', () => {
-    ElNotification({
-      title: t('common.reminder'),
-      message: t('easytier.downLoadError'),
-      type: 'error'
-    })
+    if (downLoadErrorNotify.value) {
+      ElNotification({
+        title: t('common.reminder'),
+        message: t('easytier.downLoadError'),
+        type: 'error'
+      })
+    }
+    downLoadErrorNotify.value = false
   })
   // ipcRenderer.on('update-message', (_event, arg) => {
   //   ElNotification({

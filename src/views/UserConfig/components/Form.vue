@@ -489,16 +489,12 @@ onMounted(() => {
   }
 })
 const peerChange = (value: any) => {
-  if (formData.value.peer) {
-    formData.value.peer.length = 0
-  }
-  value.forEach((v) => formData?.value.peer?.push({ uri: v }))
+  formData.value.peer = []
+  value.forEach((v) => formData.value.peer?.push({ uri: v }))
 }
 const proxyNetworkChange = (value: any) => {
-  if (formData.value.proxy_network) {
-    formData.value.proxy_network.length = 0
-  }
-  value.forEach((v) => formData?.value?.proxy_network?.push({ cidr: v }))
+  formData.value.proxy_network = []
+  value.forEach((v) => formData.value.proxy_network?.push({ cidr: v }))
 }
 const validateForm = () => {
   return formRef.value.validate()

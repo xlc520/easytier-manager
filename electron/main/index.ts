@@ -15,7 +15,7 @@ import { join } from 'path'
 import * as mainUtil from './mainUtil'
 import log from './logger'
 import updater from './updater'
-import { checkServiceInstallWin, startServiceHandle, stopServiceHandle } from './mainUtil'
+import { checkServiceOnWindows, installServiceOnWindows } from './mainUtil'
 
 process.env.DIST_ELECTRON = join(__dirname, '..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist')
@@ -281,14 +281,14 @@ ipcMain.handle('installServiceOnMacOS', async (event, serviceName, programPath, 
 ipcMain.handle('uninstallServiceOnMacOS', async (event, serviceName) =>
   mainUtil.uninstallServiceOnMacOS(serviceName)
 )
-ipcMain.handle('checkServiceInstallWin', async (event, serviceName) =>
-  mainUtil.checkServiceInstallWin(serviceName)
+ipcMain.handle('checkServiceOnWindows', async (event, serviceName) =>
+  mainUtil.checkServiceOnWindows(serviceName)
 )
-ipcMain.handle('startServiceHandle', async (event, serviceName) =>
-  mainUtil.startServiceHandle(serviceName)
+ipcMain.handle('startServiceOnWindows', async (event, serviceName) =>
+  mainUtil.startServiceOnWindows(serviceName)
 )
-ipcMain.handle('stopServiceHandle', async (event, serviceName) =>
-  mainUtil.stopServiceHandle(serviceName)
+ipcMain.handle('stopServiceOnWindows', async (event, serviceName) =>
+  mainUtil.stopServiceOnWindows(serviceName)
 )
 
 // 日志

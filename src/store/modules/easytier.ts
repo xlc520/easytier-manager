@@ -13,6 +13,7 @@ export const useEasyTierStore = defineStore('easytier', () => {
   // 启动直接报错提示
   const errRunNotify = ref(true)
   const defaultFormData = ref()
+  const os = ref()
   const setConfigList = (list) => {
     configList.value = list
   }
@@ -37,6 +38,9 @@ export const useEasyTierStore = defineStore('easytier', () => {
   const setErrRunNotify = (data) => {
     errRunNotify.value = data
   }
+  const setOs = (data) => {
+    os.value = data
+  }
   return {
     configList,
     fileList,
@@ -46,6 +50,7 @@ export const useEasyTierStore = defineStore('easytier', () => {
     p2pNotify,
     defaultFormData,
     errRunNotify,
+    os,
     setConfigList,
     setFileList,
     setFileListNoSuffix,
@@ -53,6 +58,7 @@ export const useEasyTierStore = defineStore('easytier', () => {
     setStopLoop,
     setP2pNotify,
     setDefaultFormData,
-    setErrRunNotify
+    setErrRunNotify,
+    setOs
   }
 })

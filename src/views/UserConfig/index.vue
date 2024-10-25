@@ -12,9 +12,9 @@ import { useEasyTierStore } from '@/store/modules/easytier'
 import log from '@/utils/logger'
 import path from 'path'
 import MonacoEditor from '@/components/monaco-editor'
-import { execCli, installService, uninstallService } from '@/utils/execUtil'
 import defaultData from './components/defaultData'
 import DefaultData from './components/defaultData'
+import { cloneDeep } from 'lodash-es'
 import {
   deleteFile,
   getFilesByExtension,
@@ -22,7 +22,15 @@ import {
   readFile,
   writeFile
 } from '@/utils/fileUtil'
-import { cloneDeep } from 'lodash-es'
+import {
+  checkServiceOnWindows,
+  execCli,
+  getSysInfo,
+  installService,
+  startServiceOnWindows,
+  stopServiceOnWindows,
+  uninstallService
+} from '@/utils/execUtil'
 
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
@@ -40,22 +48,35 @@ const saveLoading = ref(false)
 const formRef = ref()
 const formData = ref<FormData>(cloneDeep(DefaultData.defaultFormData))
 const configFileName = ref('')
+const prefixSvc = 'easytier-'
 const getConfigList = async () => {
   const fileList = await getFilesByExtension('config', '.toml')
   easyTierStore.setFileList(fileList)
   let tmpList: any = []
   let tmpList2: any = []
-  fileList.forEach((f: string) => {
+  for (const f of fileList) {
     const fileName = f.replace('.toml', '')
-    tmpList.push({ configFileName: fileName })
+    let status = await checkServiceOnWindows(prefixSvc + fileName)
+    tmpList.push({ configFileName: fileName, serviceStatus: serviceStatusDict(status) })
     tmpList2.push(fileName)
-  })
+  }
   easyTierStore.setConfigList(tmpList)
   easyTierStore.setFileListNoSuffix(tmpList2)
   tableData.value = tmpList
   return tmpList
 }
-
+const serviceStatusDict = (status: string) => {
+  switch (status) {
+    case 'SERVICE_STOPPED':
+      return '停止'
+    case 'SERVICE_RUNNING':
+      return '运行中'
+    case 'uninstalled':
+      return '未安装'
+    default:
+      return '停止'
+  }
+}
 const readFileData = async (fileName: string) => {
   dataConfig.value = await readFile(fileName)
 }
@@ -179,15 +200,20 @@ const saveConfigAction = async () => {
         formData.value.file_logger.dir = path.join(await getUserDataPath(), LOG_PATH)
         formData.value.file_logger.file = configFileName.value
         if (
+          !formData.value.proxy_network ||
           formData.value.proxy_network?.length === 0 ||
           formData.value.proxy_network![0].cidr === undefined
         ) {
           formData.value.proxy_network = undefined
         }
-        if (formData.value.peer?.length === 0 || formData.value.peer![0].uri === undefined) {
+        if (
+          !formData.value.peer ||
+          formData.value.peer?.length === 0 ||
+          formData.value.peer![0].uri === undefined
+        ) {
           formData.value.peer = undefined
         }
-        if (formData.value.console_logger?.level === undefined) {
+        if (!formData.value.console_logger || formData.value.console_logger?.level === undefined) {
           formData.value.console_logger = undefined
         }
         await writeFile(
@@ -232,7 +258,6 @@ const delConfig = async (row?: any) => {
       await getConfigList()
     })
 }
-
 const installServiceHandle = async (row: any) => {
   ElMessageBox.confirm(t('easytier.installServiceMessage'), t('common.reminder'), {
     confirmButtonText: t('common.ok'),
@@ -252,8 +277,20 @@ const installServiceHandle = async (row: any) => {
     }
     const binPath = path.join(await getUserDataPath(), BIN_PATH, 'easytier-core')
     const configPath = path.join(await getUserDataPath(), CONFIG_PATH, row.configFileName + '.toml')
-    await installService('easytier-' + row.configFileName, binPath, configPath)
-    ElMessage.success(t('common.accessSuccess'))
+    installService(prefixSvc + row.configFileName, binPath, configPath)
+      .then((res) => {
+        if (res) {
+          ElNotification({
+            title: t('common.reminder'),
+            message: '服务安装成功',
+            type: 'success',
+            duration: 3000
+          })
+        }
+      })
+      .finally(async () => {
+        await getConfigList()
+      })
   })
 }
 
@@ -262,18 +299,20 @@ const uninstallServiceHandle = async (row: any) => {
     confirmButtonText: t('common.ok'),
     cancelButtonText: t('common.cancel'),
     type: 'warning'
-  }).then(async () => {
-    await uninstallService('easytier-' + row.configFileName)
-    ElMessage.success(t('common.accessSuccess'))
   })
+    .then(async () => {
+      await uninstallService(prefixSvc + row.configFileName)
+      ElMessage.success(t('common.accessSuccess'))
+    })
+    .finally(async () => await getConfigList())
 }
 const startServiceHandle = async (row: any) => {
-  startServiceHandle('easytier-' + row.configFileName)
+  startServiceOnWindows(prefixSvc + row.configFileName)
     .then((res: any) => {
       if (res) {
         ElNotification({
           title: t('common.reminder'),
-          message: '运行成功',
+          message: '服务运行成功',
           type: 'success',
           duration: 2000
         })
@@ -294,14 +333,15 @@ const startServiceHandle = async (row: any) => {
         duration: 8000
       })
     })
+    .finally(async () => await getConfigList())
 }
 const stopServiceHandle = async (row: any) => {
-  stopServiceHandle('easytier-' + row.configFileName)
+  stopServiceOnWindows(prefixSvc + row.configFileName)
     .then((res: any) => {
       if (res) {
         ElNotification({
           title: t('common.reminder'),
-          message: '停止成功',
+          message: '服务停止成功',
           type: 'success',
           duration: 2000
         })
@@ -309,23 +349,26 @@ const stopServiceHandle = async (row: any) => {
       }
       ElNotification({
         title: t('common.reminder'),
-        message: '停止失败，请查看管理器日志',
+        message: '服务停止失败',
         type: 'error',
-        duration: 8000
+        duration: 3000
       })
     })
-    .catch(() => {
+    .catch((e) => {
       ElNotification({
         title: t('common.reminder'),
-        message: '停止失败，请查看管理器日志',
+        message: '服务停止失败 ' + e.message,
         type: 'error',
         duration: 8000
       })
     })
+    .finally(async () => await getConfigList())
 }
 onMounted(async () => {
   await getConfigList()
   easyTierStore.setDefaultFormData(defaultData.defaultFormData)
+  let sysInfo = await getSysInfo()
+  easyTierStore.setOs(sysInfo.osType)
 })
 </script>
 
@@ -365,6 +408,24 @@ onMounted(async () => {
           show-overflow-tooltip
           sortable
         />
+        <el-table-column
+          prop="serviceStatus"
+          label="服务状态"
+          header-align="center"
+          align="center"
+          show-overflow-tooltip
+          sortable
+        >
+          <template #default="{ row }">
+            <el-text v-if="row.serviceStatus === '运行中'" type="success" effect="dark">
+              {{ row.serviceStatus }}
+            </el-text>
+            <el-text v-else-if="row.serviceStatus === '停止'" type="info" effect="dark">
+              {{ row.serviceStatus }}
+            </el-text>
+            <el-text v-else>{{ row.serviceStatus }}</el-text>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="280" header-align="center" align="center">
           <template #default="{ row }">
             <BaseButton type="primary" size="small" @click="edit(row)">
@@ -380,7 +441,7 @@ onMounted(async () => {
         </el-table-column>
         <el-table-column label="服务操作" width="240" header-align="center" align="center">
           <template #default="{ row }">
-            <el-row justify="center" class="mb-1">
+            <el-row justify="center" class="mb-1" v-if="easyTierStore.os === 'windows'">
               <BaseButton type="success" size="small" @click="startServiceHandle(row)">
                 {{ t('easytier.startService') }}
               </BaseButton>
