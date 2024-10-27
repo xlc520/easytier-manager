@@ -31,6 +31,9 @@ const silly = async (...msg: any) => {
 const handleMsg = async (...args: any[]) => {
   // 将所有参数格式化为字符串
   const formattedArgs = args.map((arg) => {
+    if (arg instanceof Error) {
+      return arg.message
+    }
     // 判断 arg 的类型，如果是对象则转换为 JSON 字符串
     if (typeof arg === 'object' && arg !== null) {
       try {

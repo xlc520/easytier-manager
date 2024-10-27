@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor'
-import { ref, nextTick, onBeforeUnmount } from 'vue'
+import { ref, nextTick, onBeforeUnmount, onMounted } from 'vue'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
@@ -31,7 +31,7 @@ export function useMonacoEditor(language: string = 'javascript') {
   const monacoEditorRef = ref<HTMLElement>()
 
   // 创建实例
-  function createEditor(editorOption: monaco.editor.IStandaloneEditorConstructionOptions = {}) {
+  function createEditor(editorOption: monaco.editor.IEditorOptions | any = {}) {
     if (!monacoEditorRef.value) return
     monacoEditor = monaco.editor.create(monacoEditorRef.value, {
       // 初始模型
@@ -61,108 +61,6 @@ export function useMonacoEditor(language: string = 'javascript') {
       automaticLayout: true,
       ...editorOption
     })
-    // 定义 TOML 文件的语言配置
-    monaco.languages.register({ id: 'toml' })
-    monaco.languages.setMonarchTokensProvider('toml', {
-      tokenizer: {
-        root: [
-          [/#.*$/, 'comment'], // 注释
-          [/\[.*?\]/, 'section'], // 节
-          [/[a-zA-Z_][a-zA-Z0-9_]*/, 'key'], // 键
-          [/\s*=\s*/, 'operator'], // 操作符
-          [/"([^"\\]|\\.)*"/, 'string'], // 字符串
-          [/'([^'\\]|\\.)*'/, 'string'], // 字符串
-          [/\d+/, 'number'], // 数字
-          [/\s+/, 'white'], // 空白
-          [/./, 'text'] // 文本
-        ]
-      }
-    })
-    // 定义 TOML 文件的语法高亮
-    // monaco.editor.defineTheme('tomlTheme', {
-    //   base: 'vs',
-    //   inherit: true,
-    //   rules: [
-    //     { token: 'comment', foreground: '008000' }, // 注释为绿色
-    //     { token: 'section', foreground: '800080', fontStyle: 'bold' }, // 节为紫色
-    //     { token: 'key', foreground: 'ffffff' }, // 键为白色
-    //     { token: 'operator', foreground: '000000' }, // 操作符为黑色
-    //     { token: 'string', foreground: 'ffa500' }, // 字符串为橙色
-    //     { token: 'number', foreground: 'ffa500' }, // 数字为橙色
-    //     { token: 'white', foreground: 'ffffff' }, // 空白为白色
-    //     { token: 'text', foreground: '000000' } // 文本为黑色
-    //   ],
-    //   colors: {
-    //     'editor.foreground': '#000000',
-    //     'editor.background': '#f0f0f0'
-    //   }
-    // })
-
-    // 定义日志文件的语言配置
-    monaco.languages.register({ id: 'log' })
-    monaco.languages.setMonarchTokensProvider('log', {
-      tokenizer: {
-        root: [
-          [/\[ERROR\]/, 'error'],
-          [/\[WARNING\]/, 'warning'],
-          [/\[INFO\]/, 'info'],
-          [/\[DEBUG\]/, 'debug'],
-          [/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, 'timestamp'],
-          [/[a-zA-Z0-9._-]+/, 'identifier'],
-          [/\s+/, 'white'],
-          [/./, 'text']
-        ]
-      }
-    })
-    // monaco.languages.setMonarchTokensProvider('log', {
-    //   tokenizer: {
-    //     root: [
-    //       [/$$ERROR$$.*/, 'error'],
-    //       [/$$WARN$$.*/, 'warning'],
-    //       [/$$INFO$$.*/, 'info'],
-    //       [/$$DEBUG$$.*/, 'debug'],
-    //       [/\d{4}-\d{2}-\d{2}/, 'date'],
-    //       [/\d{2}:\d{2}:\d{2}/, 'time'],
-    //       [/".*?"/, 'string'],
-    //       [/\{.*?\}/, 'object'],
-    //       [/$$.*?$$/, 'array']
-    //     ]
-    //   }
-    // })
-    // 定义日志文件的语法高亮
-    // monaco.editor.defineTheme('logTheme', {
-    //   base: 'vs',
-    //   inherit: true,
-    //   rules: [
-    //     { token: 'error', foreground: 'ff0000', fontStyle: 'bold' },
-    //     { token: 'warning', foreground: 'ffa500', fontStyle: 'bold' },
-    //     { token: 'info', foreground: '0000ff', fontStyle: 'bold' },
-    //     { token: 'debug', foreground: '008000', fontStyle: 'bold' },
-    //     { token: 'timestamp', foreground: '808080' },
-    //     { token: 'identifier', foreground: '000000' },
-    //     { token: 'white', foreground: 'ffffff' },
-    //     { token: 'text', foreground: '000000' }
-    //   ],
-    //   colors: {
-    //     'editor.foreground': '#000000',
-    //     'editor.background': '#f0f0f0'
-    //   }
-    // })
-    // monaco.editor.defineTheme('logTheme', {
-    //   base: 'vs',
-    //   inherit: true,
-    //   rules: [
-    //     { token: 'error', foreground: 'ff0000', fontStyle: 'bold' },
-    //     { token: 'warning', foreground: 'FFA500' },
-    //     { token: 'info', foreground: '0000FF' },
-    //     { token: 'debug', foreground: '008000' },
-    //     { token: 'date', foreground: '008080' },
-    //     { token: 'time', foreground: '008080' },
-    //     { token: 'string', foreground: 'A31515' },
-    //     { token: 'object', foreground: '000080' },
-    //     { token: 'array', foreground: '800080' }
-    //   ]
-    // })
 
     return monacoEditor
   }
@@ -212,6 +110,63 @@ export function useMonacoEditor(language: string = 'javascript') {
     monaco.editor.setTheme(newTheme)
   }
 
+  onMounted(() => {
+    // 定义 TOML 文件的语言配置
+    monaco.languages.register({ id: 'toml' })
+    monaco.languages.setMonarchTokensProvider('toml', {
+      tokenizer: {
+        root: [
+          [/#.*$/, 'comment'], // 注释
+          [/\[.*?\]/, 'section'], // 节
+          [/[a-zA-Z_][a-zA-Z0-9_]*/, 'key'], // 键
+          [/\s*=\s*/, 'operator'], // 操作符
+          [/"([^"\\]|\\.)*"/, 'string'], // 字符串
+          [/'([^'\\]|\\.)*'/, 'string'], // 字符串
+          [/\d+/, 'number'], // 数字
+          [/\s+/, 'white'], // 空白
+          [/./, 'text'] // 文本
+        ]
+      }
+    })
+    // 定义日志文件的语言配置
+    monaco.languages.register({ id: 'log' })
+    monaco.languages.setMonarchTokensProvider('log', {
+      // 定义语言的语法规则
+      tokenizer: {
+        root: [
+          // 匹配日期时间格式
+          [/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}\+\d{2}:\d{2}/, 'custom-date'],
+          [/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/, 'custom-date'],
+          [/\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\]/, 'custom-date'],
+          // 匹配日志级别（INFO, WARN, ERROR, DEBUG 等）
+          [/INFO|info/, 'custom-info'],
+          [/\[INFO\]|\[info\]/, 'custom-info'],
+          [/ERROR|error/, 'custom-error'],
+          [/\[ERROR\]|\[error\]/, 'custom-error'],
+          [/WARN|warn/, 'custom-warning'],
+          [/\[WARN\]|\[warn\]/, 'custom-warning'],
+          [/DEBUG|debug/, 'custom-debug'],
+          [/\[DEBUG\]|\[debug\]/, 'custom-debug'],
+          // 其他文本
+          [/./, 'custom-text']
+        ]
+      }
+    })
+    // 主题
+    monaco.editor.defineTheme('log', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'custom-date', foreground: '#3d714a' }, // 绿色
+        { token: 'custom-info', foreground: '#8bc8ad' }, // info 级别显示为蓝色
+        { token: 'custom-error', foreground: '#ea5744' }, // error 级别显示为红色
+        { token: 'custom-warning', foreground: '#d5d261' }, // warning 级别显示为橙色
+        { token: 'custom-debug', foreground: '#808080' }, // debug 级别显示为灰色
+        { token: 'custom-text', foreground: '#eeefe7' } // debug 级别显示为灰色
+      ],
+      colors: {}
+    })
+  })
   // 页面离开 销毁
   onBeforeUnmount(() => {
     if (monacoEditor) {

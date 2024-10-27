@@ -8,6 +8,7 @@ export const readFile = async (filePath: string) => {
     return await ipcRenderer.invoke('readFile', filePath)
   } catch (error) {
     log.error('Error reading file:', error)
+    return ''
   }
 }
 

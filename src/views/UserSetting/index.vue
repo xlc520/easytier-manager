@@ -91,7 +91,7 @@ const downLoadCore = async () => {
       title: '下载中',
       message: '开始使用加速源下载',
       type: 'info',
-      duration: 2000
+      duration: 6000
     })
     downLoadSuccessNotify.value = true
     downLoadErrorNotify.value = true
@@ -287,9 +287,8 @@ onMounted(async () => {
             </div>
           </template>
           1.选择版本时可以手动输入，对应官方内核仓库的版本，例如：2.0.3<br />
-          2.Github加速链接为空默认随机加速链接<br />
-          3.下载视网络情况而定，一般30秒以内<br />
-          4.下载完后点击安装，安装成功可检测内核是否存在<br />
+          2.Github加速链接为空默认随机加速链接，下载视网络情况而定，一般30秒以内<br />
+          3.下载完后点击安装，安装成功后检测内核是否存在<br />
           版本
           <el-select
             v-model="verSelect"
@@ -310,9 +309,9 @@ onMounted(async () => {
           &emsp;Github加速链接
           <el-input
             type="text"
-            placeholder="Github加速链接,例如:https://ghproxy.cn"
+            placeholder="例如:https://ghproxy.cn"
             v-model="mirrorUrlSelect"
-            style="width: 60%; margin-left: 3px"
+            style="width: 45%; margin-left: 2px"
             clearable
           />
           <br />
