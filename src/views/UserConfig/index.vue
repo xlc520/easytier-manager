@@ -2,7 +2,7 @@
 import { ContentWrap } from '@/components/ContentWrap'
 import { useI18n } from '@/hooks/web/useI18n'
 import { onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
+import { ElMessageBox, ElNotification } from 'element-plus'
 import Form from './components/Form.vue'
 import { Dialog } from '@/components/Dialog'
 import { BaseButton } from '@/components/Button'
@@ -66,6 +66,9 @@ const getConfigList = async () => {
   return tmpList
 }
 const serviceStatusDict = (status: string) => {
+  if (!status) {
+    return '未安装'
+  }
   switch (status) {
     case 'SERVICE_STOPPED':
       return '停止'
@@ -151,10 +154,20 @@ const addConfigAction = async () => {
         CONFIG_PATH + '/' + configFileName.value + '.toml',
         toml.stringify(formData.value)
       )
-      ElMessage.success(t('common.accessSuccess'))
+      ElNotification({
+        title: t('common.reminder'),
+        message: t('common.accessSuccess'),
+        type: 'success',
+        duration: 2000
+      })
     } catch (error) {
       log.log('表单新增报错：' + error)
-      ElMessage.error('表单新增报错')
+      ElNotification({
+        title: t('common.reminder'),
+        message: '表单新增报错',
+        type: 'error',
+        duration: 2000
+      })
     } finally {
       configFileName.value = ''
       saveLoading.value = false
@@ -165,16 +178,33 @@ const addConfigAction = async () => {
       saveLoading.value = true
       // @ts-ignore
       // @ts-nocheck
-      const parseValue: EasyTierConfig = toml.parse(dataConfig.value)
-      parseValue.file_logger.dir = path.join(await getUserDataPath(), LOG_PATH)
-      parseValue.file_logger.file = configFileName.value
+      let parseValue: EasyTierConfig = toml.parse(dataConfig.value)
+      parseValue = {
+        ...parseValue,
+        file_logger: {
+          level: parseValue.file_logger?.level ? parseValue.file_logger?.level : 'error',
+          dir: path.join(await getUserDataPath(), LOG_PATH),
+          file: configFileName.value
+        }
+      }
       await writeFile(
         CONFIG_PATH + '/' + configFileName.value + '.toml',
         toml.stringify(parseValue)
       )
-      ElMessage.success(t('common.accessSuccess'))
-    } catch (error) {
+      ElNotification({
+        title: t('common.reminder'),
+        message: t('common.accessSuccess'),
+        type: 'success',
+        duration: 2000
+      })
+    } catch (error: any) {
       log.error('Error writing file:', error)
+      ElNotification({
+        title: t('common.reminder'),
+        message: error.message,
+        type: 'error',
+        duration: 5000
+      })
     } finally {
       configFileName.value = ''
       saveLoading.value = false
@@ -220,10 +250,20 @@ const saveConfigAction = async () => {
           CONFIG_PATH + '/' + configFileName.value + '.toml',
           toml.stringify(formData.value)
         )
-        ElMessage.success(t('common.accessSuccess'))
+        ElNotification({
+          title: t('common.reminder'),
+          message: t('common.accessSuccess'),
+          type: 'success',
+          duration: 2000
+        })
       } catch (error) {
         log.log('表单保存报错：' + error)
-        ElMessage.error('表单保存报错')
+        ElNotification({
+          title: t('common.reminder'),
+          message: '表单保存报错',
+          type: 'success',
+          duration: 2000
+        })
       } finally {
         configFileName.value = ''
         saveLoading.value = false
@@ -231,15 +271,39 @@ const saveConfigAction = async () => {
       }
     }
   } else {
-    // @ts-ignore
-    // @ts-nocheck
-    const parseValue: EasyTierConfig = toml.parse(dataConfig.value)
-    parseValue.file_logger.dir = path.join(await getUserDataPath(), LOG_PATH)
-    parseValue.file_logger.file = configFileName.value
-    await writeFile(CONFIG_PATH + '/' + configFileName.value + '.toml', toml.stringify(parseValue))
-    ElMessage.success(t('common.accessSuccess'))
-    configFileName.value = ''
-    dialogVisible.value = false
+    try {
+      // @ts-ignore
+      // @ts-nocheck
+      let parseValue: EasyTierConfig = toml.parse(dataConfig.value)
+      parseValue = {
+        ...parseValue,
+        file_logger: {
+          level: parseValue.file_logger?.level ? parseValue.file_logger?.level : 'error',
+          dir: path.join(await getUserDataPath(), LOG_PATH),
+          file: configFileName.value
+        }
+      }
+      await writeFile(
+        CONFIG_PATH + '/' + configFileName.value + '.toml',
+        toml.stringify(parseValue)
+      )
+      configFileName.value = ''
+      dialogVisible.value = false
+      ElNotification({
+        title: t('common.reminder'),
+        message: t('common.accessSuccess'),
+        type: 'success',
+        duration: 2000
+      })
+    } catch (error: any) {
+      log.error('Error writing file:', error.message)
+      ElNotification({
+        title: t('common.reminder'),
+        message: error.message,
+        type: 'error',
+        duration: 5000
+      })
+    }
   }
   await getConfigList()
 }
@@ -250,9 +314,16 @@ const delConfig = async (row?: any) => {
     type: 'warning'
   })
     .then(async () => {
-      log.log('删除', row)
+      log.log('删除服务', row)
+      await uninstallService(prefixSvc + row?.configFileName)
+      log.log('删除配置', row)
       await deleteFile(CONFIG_PATH + '/' + row?.configFileName + '.toml')
-      ElMessage.success(t('common.delSuccess'))
+      ElNotification({
+        title: t('common.reminder'),
+        message: t('common.delSuccess'),
+        type: 'success',
+        duration: 2000
+      })
     })
     .finally(async () => {
       await getConfigList()
@@ -279,6 +350,7 @@ const installServiceHandle = async (row: any) => {
     const configPath = path.join(await getUserDataPath(), CONFIG_PATH, row.configFileName + '.toml')
     installService(prefixSvc + row.configFileName, binPath, configPath)
       .then((res) => {
+        log.info('res', res)
         if (res) {
           ElNotification({
             title: t('common.reminder'),
@@ -288,8 +360,8 @@ const installServiceHandle = async (row: any) => {
           })
         }
       })
-      .finally(async () => {
-        await getConfigList()
+      .finally(() => {
+        getConfigList()
       })
   })
 }
@@ -302,7 +374,12 @@ const uninstallServiceHandle = async (row: any) => {
   })
     .then(async () => {
       await uninstallService(prefixSvc + row.configFileName)
-      ElMessage.success(t('common.accessSuccess'))
+      ElNotification({
+        title: t('common.reminder'),
+        message: t('common.accessSuccess'),
+        type: 'success',
+        duration: 2000
+      })
     })
     .finally(async () => await getConfigList())
 }
@@ -489,7 +566,13 @@ onMounted(async () => {
           <el-tooltip content="将作为配置文件名、服务名，最好使用字母、数字、-、_" placement="top">
             <Icon icon="memory:tooltip-start-alert" />
           </el-tooltip>
-          <el-input v-model="configFileName" type="text" style="width: 80%" clearable />
+          <el-input
+            v-model="configFileName"
+            type="text"
+            style="width: 80%"
+            :disabled="actionType === 'edit' ? true : false"
+            clearable
+          />
         </el-form-item>
       </div>
       <Form v-if="editType === 'form'" :form-data="formData" ref="formRef" />

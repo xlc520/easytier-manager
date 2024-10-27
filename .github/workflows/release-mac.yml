@@ -45,3 +45,4 @@ jobs:
           fail_on_unmatched_files: false
           files: |
             release/*.dmg
+            release/*.blockmap

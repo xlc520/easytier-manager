@@ -46,3 +46,4 @@ jobs:
           files: |
             release/*.exe
             release/*.zip
+            release/*.blockmap

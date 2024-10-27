@@ -66,3 +66,4 @@ jobs:
             release/*.tar.gz
             release/*.rpm
             release/latest*.yml
+            release/*.blockmap

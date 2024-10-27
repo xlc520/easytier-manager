@@ -56,7 +56,7 @@ export const writeFile = async (filePath: string, content: any) => {
     log.info('配置写入路径:', dataPath)
     fs.writeFileSync(dataPath, content)
   } catch (error) {
-    log.error('Error writing file:', error)
+    log.error('Error writing file:', error.toString())
   }
 }
 const ensureDirectoryExists = async (filePath: string) => {
@@ -475,12 +475,12 @@ const execCmdRet = async (command: string) => {
     exec(command, (error, stdout, stderr) => {
       if (error) {
         log.debug(`Error: ${error.message.toString().trim()}`)
-        resolve(error.message.toString().trim())
+        reject(error.message.toString().trim())
         return
       }
       if (stderr) {
         log.error(`Stderr: ${stderr.toString().trim()}`)
-        resolve(stderr.toString().trim())
+        reject(stderr.toString().trim())
         return
       }
       log.info(`执行结果: ${stdout.toString().trim()}`)
@@ -515,29 +515,35 @@ export const installServiceOnWindows = async (
       // 服务是否存在
       const exist: any = await checkServiceOnWindows(serviceName)
       log.info('服务是否存在:', exist)
-      if (exist !== 'uninstalled') {
+      if (exist) {
         resolve(true)
         return
       }
-      const command1 = `${libPath} install ${serviceName} ${corePath}`
-      const command2 = `${libPath} set ${serviceName} AppParameters "-c ${args}"`
-      const command3 = `${libPath} set ${serviceName} AppDirectory ${binPath}`
-      const command4 = `${libPath} set ${serviceName} AppExit Default Restart`
-      const command5 = `${libPath} set ${serviceName} Description "EasyTier 组网,服务配置:${serviceName}"`
-      const command6 = `${libPath} set ${serviceName} DisplayName "EasyTier 组网 ${serviceName}"`
-      const command7 = `${libPath} set ${serviceName} ObjectName LocalSystem`
-      const command8 = `${libPath} set ${serviceName} Start SERVICE_AUTO_START`
-      const command9 = `${libPath} set ${serviceName} Type SERVICE_WIN32_OWN_PROCESS`
-      await execCmdRet(command1)
-      await execCmdRet(command2)
-      await execCmdRet(command3)
-      await execCmdRet(command4)
-      await execCmdRet(command5)
-      await execCmdRet(command6)
-      await execCmdRet(command7)
-      await execCmdRet(command8)
-      await execCmdRet(command9)
-      resolve(true)
+      const command1 = `"${libPath}" install ${serviceName} "${corePath}"`
+      const command2 = `"${libPath}" set ${serviceName} AppParameters "-c ${args}"`
+      const command3 = `"${libPath}" set ${serviceName} AppDirectory "${binPath}"`
+      const command4 = `"${libPath}" set ${serviceName} AppExit Default Restart`
+      const command5 = `"${libPath}" set ${serviceName} Description "EasyTier 组网,服务配置:${serviceName}"`
+      const command6 = `"${libPath}" set ${serviceName} DisplayName "EasyTier 组网 ${serviceName}"`
+      const command7 = `"${libPath}" set ${serviceName} ObjectName LocalSystem`
+      const command8 = `"${libPath}" set ${serviceName} Start SERVICE_AUTO_START`
+      const command9 = `"${libPath}" set ${serviceName} Type SERVICE_WIN32_OWN_PROCESS`
+      await execCmdRet(command1).then(async (res) => {
+        log.info('execCmdRet res', res)
+        if (res) {
+          await execCmdRet(command2)
+          await execCmdRet(command3)
+          await execCmdRet(command4)
+          await execCmdRet(command5)
+          await execCmdRet(command6)
+          await execCmdRet(command7)
+          await execCmdRet(command8)
+          await execCmdRet(command9)
+          resolve(true)
+          return
+        }
+        resolve(false)
+      })
     } catch (e) {
       log.error('安装服务失败:' + e.message)
       resolve(false)
@@ -547,57 +553,80 @@ export const installServiceOnWindows = async (
 // Windows 删除服务
 export const uninstallServiceOnWindows = (serviceName: string) => {
   return new Promise(async (resolve, reject) => {
-    const appDirectory = getAppDirectory()
-    const libPath = path.join(appDirectory, 'lib', 'nssm')
-    const command = `${libPath} remove ${serviceName} confirm`
-    const ret: any = await execCmdRet(command)
-    log.debug('Windows 删除服务:', ret)
-    if (ret.includes('removed successfully')) {
-      resolve(true)
-    } else {
+    try {
+      const appDirectory = getAppDirectory()
+      const libPath = path.join(appDirectory, 'lib', 'nssm')
+      const command = `"${libPath}" remove ${serviceName} confirm`
+      const ret: any = await execCmdRet(command)
+      log.debug('删除服务:', ret)
+      if (ret.includes('removed successfully')) {
+        resolve(true)
+      } else {
+        resolve(false)
+      }
+    } catch (e) {
+      log.error('删除服务出错:', e)
       resolve(false)
     }
   })
 }
 export const checkServiceOnWindows = (serviceName: string) => {
   return new Promise(async (resolve, reject) => {
-    const appDirectory = getAppDirectory()
-    const libPath = path.join(appDirectory, 'lib', 'nssm')
-    const command = `${libPath} status ${serviceName}`
-    const ret: any = await execCmdRet(command)
-    if (ret.includes("Can't open service")) {
-      resolve('uninstalled')
-      return
+    try {
+      const appDirectory = getAppDirectory()
+      const libPath = path.join(appDirectory, 'lib', 'nssm')
+      const command = `"${libPath}" status ${serviceName}`
+      const ret: any = await execCmdRet(command)
+      if (ret.includes("Can't open service")) {
+        resolve('uninstalled')
+        return
+      }
+      resolve(ret)
+    } catch (e) {
+      log.debug('检测服务出错:', e)
+      resolve(false)
     }
-    resolve(ret)
   })
 }
 export const startServiceOnWindows = (serviceName: string) => {
   return new Promise(async (resolve, reject) => {
-    const appDirectory = getAppDirectory()
-    const libPath = path.join(appDirectory, 'lib', 'nssm')
-    const command = `${libPath} start ${serviceName}`
-    await execCmdRet(command)
-    const ret = await checkServiceOnWindows(serviceName)
-    log.debug('启动服务:', ret)
-    if (ret === 'SERVICE_RUNNING') {
-      resolve(true)
-    } else {
+    try {
+      const appDirectory = getAppDirectory()
+      const libPath = path.join(appDirectory, 'lib', 'nssm')
+      const command = `"${libPath}" start ${serviceName}`
+      await execCmdRet(command)
+      log.info(new Date().toLocaleDateString(), 'start')
+      await sleep(1000)
+      log.info(new Date().toLocaleDateString(), 'start2')
+      const ret = await checkServiceOnWindows(serviceName)
+      log.debug('启动服务:', ret)
+      if (ret === 'SERVICE_RUNNING') {
+        resolve(true)
+      } else {
+        resolve(false)
+      }
+    } catch (e) {
+      log.error('启动服务出错:', e)
       resolve(false)
     }
   })
 }
 export const stopServiceOnWindows = (serviceName: string) => {
   return new Promise(async (resolve, reject) => {
-    const appDirectory = getAppDirectory()
-    const libPath = path.join(appDirectory, 'lib', 'nssm')
-    const command = `${libPath} stop ${serviceName}`
-    await execCmdRet(command)
-    const ret = await checkServiceOnWindows(serviceName)
-    log.debug('停止服务:', ret)
-    if (ret === 'SERVICE_STOPPED') {
-      resolve(true)
-    } else {
+    try {
+      const appDirectory = getAppDirectory()
+      const libPath = path.join(appDirectory, 'lib', 'nssm')
+      const command = `"${libPath}" stop ${serviceName}`
+      await execCmdRet(command)
+      const ret = await checkServiceOnWindows(serviceName)
+      log.debug('停止服务:', ret)
+      if (ret === 'SERVICE_STOPPED') {
+        resolve(true)
+      } else {
+        resolve(false)
+      }
+    } catch (e) {
+      log.error('停止服务出错:', e)
       resolve(false)
     }
   })
@@ -729,4 +758,7 @@ export const uninstallServiceOnMacOS = (serviceName) => {
       resolve(true)
     })
   })
+}
+export const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }

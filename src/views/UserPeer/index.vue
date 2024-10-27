@@ -53,6 +53,8 @@ const logDialogVisible = ref(false)
 const descriptionCollapse = ref(false)
 const runningTag = ref(false)
 const logData = ref('')
+const MonacoEditRef = ref()
+const wordWrap = ref('off')
 const nodeInfo = ref({})
 const peerInfo = ref<PeerInfo[]>([])
 const treeEl = ref<typeof ElTree>()
@@ -273,7 +275,12 @@ const stopAction = async () => {
   if (p && p.commandLine) {
     await killProcess(p.pid)
     await reset()
-    ElMessage.success(t('common.accessSuccess'))
+    ElNotification({
+      title: t('common.reminder'),
+      message: t('common.accessSuccess'),
+      type: 'success',
+      duration: 2000
+    })
   }
   easyTierStore.setStopLoop(true)
   currentNodeKeyChange()
@@ -288,6 +295,9 @@ const reset = async () => {
 const viewLogAction = async () => {
   const date = dayjs(new Date()).format('YYYY-MM-DD')
   logData.value = await readFile(LOG_PATH + '/' + currentNodeKey.value + '.' + date)
+  if (!logData.value || logData.value === '') {
+    logData.value = await readFile(LOG_PATH + '/' + currentNodeKey.value + '.' + date + '.log')
+  }
   logDialogVisible.value = true
 }
 const refreshAction = async () => {
@@ -335,6 +345,9 @@ const currentNodeKeyChange = async () => {
   runningTag.value = false
   easyTierStore.setStopLoop(true)
   await getList()
+}
+const wordWrapChange = (val: any) => {
+  MonacoEditRef.value.updateOptions({ wordWrap: val })
 }
 onBeforeMount(async () => {
   await getConfigList()
@@ -435,13 +448,26 @@ onMounted(() => {
 
     <Dialog v-model="logDialogVisible" :title="dialogTitle" maxHeight="60vh">
       <div class="edit-container h-60vh">
+        <el-form-item label="日志换行">
+          <el-select
+            v-model="wordWrap"
+            style="width: 240px"
+            @change="wordWrapChange"
+            default-first-option
+          >
+            <el-option label="不换行" value="off" />
+            <el-option label="换行" value="on" />
+          </el-select>
+        </el-form-item>
         <MonacoEditor
           ref="MonacoEditRef"
           v-model="logData"
           language="log"
+          theme="log"
           :readOnly="true"
           :languageSelector="false"
           :themeSelector="false"
+          :wordWrap="wordWrap"
         />
       </div>
       <template #footer>

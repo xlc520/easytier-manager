@@ -1,6 +1,6 @@
 {
   "name": "easytier-manager",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "EasyTier 管理器",
   "main": "dist-electron/main/index.js",
   "private": false,
@@ -160,10 +160,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kailong321200875/vue-element-plus-admin.git"
+    "url": "git+https://github.com/xlc520/easytier-manager.git"
   },
   "bugs": {
-    "url": "https://github.com/kailong321200875/vue-element-plus-admin/issues"
+    "url": "https://github.com/xlc520/easytier-manager/issues"
   },
-  "homepage": "https://github.com/kailong321200875/vue-element-plus-admin"
+  "homepage": "https://github.com/xlc520/easytier-manager"
 }

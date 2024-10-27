@@ -15,17 +15,19 @@ const props = withDefaults(
     editorOption?: Object
     modelValue: string
     readOnly?: boolean //是否只读  取值 true | false
+    wordWrap?: string // 开启自动换行
   }>(),
   {
     width: '100%',
     height: '100%',
-    languageSelector: true,
+    languageSelector: false,
     language: 'javascript',
-    themeSelector: true,
+    themeSelector: false,
     theme: 'vs-dark',
     editorOption: () => ({}),
     modelValue: '',
-    readOnly: false //是否只读  取值 true | false
+    readOnly: false, //是否只读  取值 true | false
+    wordWrap: 'off' // 开启自动换行
   }
 )
 
@@ -76,6 +78,7 @@ watch(
 const localLanguage = ref(props.language)
 
 watch(localLanguage, (newLanguage) => {
+  console.log('newLanguage', newLanguage)
   changeLanguage(newLanguage)
 })
 

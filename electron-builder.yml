@@ -6,9 +6,9 @@ productName: easytier-manager
 # 版权信息
 copyright: 'Copyright ©2024-present easytier-manager'
 # 应用版本
-buildVersion: 2.1.1
+buildVersion: 2.2.0
 # 内部版本
-buildNumber: 211
+buildNumber: 220
 asar: true
 # normal
 #compression: store
@@ -27,6 +27,7 @@ files:
 # Windows 平台的打包设置，包括目标架构和图标
 win:
   # icon: build/icons/icon.ico
+  requestedExecutionLevel: highestAvailable
   target:
     - target: nsis
       arch:
@@ -81,6 +82,7 @@ publish:
   provider: github
   owner: xlc520
   repo: easytier-manager
+  releaseType: release
   #  url: http://your-update-server.com/updates/
 
 # 额外包含的文件

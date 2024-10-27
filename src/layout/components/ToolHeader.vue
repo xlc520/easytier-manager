@@ -70,10 +70,14 @@ const toDocumentEasyTier = () => {
         :color="variables['top-header-text-color']"
       />
       <div class="ml-1 mr-4" @click="toDocumentEasyTier">
-        <Icon :size="18" icon="devicon:github" class="cursor-pointer" />
+        <el-tooltip content="EasyTier Github" placement="bottom" effect="light">
+          <Icon :size="18" icon="devicon:github" class="cursor-pointer" />
+        </el-tooltip>
       </div>
       <div class="mr-10" @click="toDocumentEasytierManager">
-        <Icon :size="18" icon="devicon:github" class="cursor-pointer" />
+        <el-tooltip content="EasyTier 管理器 Github" placement="bottom" effect="light">
+          <Icon :size="18" icon="devicon:github" class="cursor-pointer" />
+        </el-tooltip>
       </div>
     </div>
   </div>
