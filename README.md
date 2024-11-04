@@ -5,31 +5,49 @@
 
 ## 使用教程
 
-**(重要) 1.设置页 检测内核是否存在，若不存在则下载内核，然后安装，再次检测内核是否存在**（仅首次使用需要，后续确认存在即可直接运行）
+- **1.【重要】设置页 检测内核是否存在，若不存在则下载内核，然后安装，再次检测内核是否存在**（仅首次使用需要，后续确认存在即可直接运行）
 
-2.配置页新建组网配置，提供直接编辑代码的方式，和表单填写
+![manage-step1](./doc/assets/manage-step1.png)
 
-3.工作台（首页）运行指定配置
+![manage-step2](./doc/assets/manage-step2.png)
 
-(可选) 4.组网成功后，连接没有问题可退出管理器(托盘图标右键`退出`)
+- 2.配置页新建组网配置，提供直接编辑代码的方式，和表单填写
 
-(可选) 5.在配置页面，安装指定配置为系统服务(经测试过Windows 11 22631.4317)
+![manage-step3](./doc/assets/manage-step3.png)
+
+![manage-step4](./doc/assets/manage-step4.png)
+
+![manage-step5](./doc/assets/manage-step5.png)
+
+![manage-step6](./doc/assets/manage-step6.png)
+
+- 3.工作台（首页）运行指定配置
+
+![manage-step7](./doc/assets/manage-step7.png)
+
+- 4.[可选] 组网成功后，连接没有问题可退出管理器,核心程序会在后台运行(托盘图标右键`退出`)
+
+- 5.[可选] 在配置页面，安装指定配置为系统服务
+
+![manage-step8](./doc/assets/manage-step8.png)
+
+![manage-step9](./doc/assets/manage-step9.png)
 
 ### 各个包说明
 
 - `exe`：安装程序，安装后才可使用
 - `zip`：免安装，解压即可使用
+- `easytier-manager-win_2.0.0.exe`：64、32位 Windows 系统通用安装包
+- `easytier-manager-win-x64_2.0.0.exe`：64位 Windows 系统安装包
+- `easytier-manager-win-ia32_2.0.0.exe`：32位 Windows 系统安装包
+- `easytier-manager-win7-x64_2.0.0.exe`: 64位 Windows 7 系统安装包
 - `tar.gz` `deb` `rpm` `AppImage`：Linux系统上使用(尚未测试)
-- `easytier-manager-win_2.0.0.exe`：64、32位Windows系统通用安装包
-- `easytier-manager-win-x64_2.0.0.exe`：64位Windows系统安装包
-- `easytier-manager-win-ia32_2.0.0.exe`：32位Windows系统安装包
-- `easytier-manager-win7-x64_2.0.0.exe`:64位Windows 7系统安装包
 
 ## 介绍
 
 EasyTier 由 Rust 和 Tokio 驱动，一个简单、安全、去中心化的组网方案
 
-EasyTier 管理器 整合Vue3 + Vite5 + Electron33 + Element-Plus， 是一个基于 `element-plus` 免费开源的中后台模版。使用了最新的`vue3`，`vite5`，`TypeScript` 等主流技术开发。
+EasyTier 管理器 整合Vue3 + Vite5 + Electron33 + Element-Plus， 是一个基于 `element-plus` 免费开源的组网管理器。使用了最新的`vue3`，`vite5`，`TypeScript` 等主流技术开发。
 
 ## 特性
 
@@ -51,7 +69,7 @@ EasyTier 管理器 整合Vue3 + Vite5 + Electron33 + Element-Plus， 是一个�
 
 ![image-20241025112907169](./doc/assets/image-20241025112907169.png)
 
-### Bug 问题反馈 & 需求建议
+## Bug 反馈 & 建议
 
 > 趋于稳定可能不会在开发新功能，只会修复漏洞之类的
 
@@ -143,7 +161,7 @@ pnpm run dev
 
 ## 系统支持
 
-理论支持Windows 10 、Windows 11、 Linux (桌面版)、MacOS(暂时无证书，无法打包测试)
+理论支持Windows 11 、Windows 10 、 Windows 7 、 Linux (桌面版)、MacOS(暂时无证书，无法打包测试)
 
 ## 许可证
 
