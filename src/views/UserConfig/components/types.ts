@@ -37,6 +37,7 @@ interface Flags {
   manual_routes: string | undefined
   ipv6_listener: string
   socks5?: string | undefined
+  relay_network_whitelist?: string | undefined
 }
 
 interface FormData {

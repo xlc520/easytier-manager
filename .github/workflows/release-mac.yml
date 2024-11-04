@@ -46,3 +46,4 @@ jobs:
           files: |
             release/*.dmg
             release/*.blockmap
+            release/latest*.yml

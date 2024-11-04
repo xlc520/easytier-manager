@@ -24,6 +24,7 @@ const { t } = useI18n()
 const sysInfo = ref<SysInfo>({ osArch: '', osType: '', osVersion: '' })
 const userDataPath = ref('')
 const fileName = ref('')
+const mirrorUrlIndex = ref(0)
 const downLoadSuccess = ref(false)
 const downLoadSuccessNotify = ref(true)
 const downLoadErrorNotify = ref(true)
@@ -82,31 +83,15 @@ const mirrorUrlSelect = ref<string>('')
 //   return downUrl
 // }
 const downLoadCore = async () => {
-  // 尝试官方链接
-  for (const mirror of GITHUB_MIRROR_URL) {
-    if (downLoadSuccess.value) {
-      return
-    }
-    ElNotification({
-      title: '下载中',
-      message: '开始使用加速源下载',
-      type: 'info',
-      duration: 6000
-    })
-    downLoadSuccessNotify.value = true
-    downLoadErrorNotify.value = true
-    await downloadEasyTier(fileName.value, mirror.value)
-    if (mirror.value === GITHUB_MIRROR_URL[-1].value) {
-      // 使用默认链接
-      ElNotification({
-        title: '下载中',
-        message: '开始使用官方下载',
-        type: 'info',
-        duration: 2000
-      })
-      await downloadEasyTier(fileName.value, mirror.value)
-    }
-  }
+  ElNotification({
+    title: '下载中',
+    message: `开始使用加速源[${mirrorUrlIndex.value + 1}]下载`,
+    type: 'info',
+    duration: 8000
+  })
+  downLoadSuccessNotify.value = true
+  downLoadErrorNotify.value = true
+  await downloadEasyTier(fileName.value, GITHUB_MIRROR_URL[mirrorUrlIndex.value].value)
 }
 const installCore = async () => {
   const res = await extractZip(fileName.value, BIN_PATH)
@@ -122,6 +107,14 @@ const installCore = async () => {
     title: t('common.reminder'),
     message: t('error.networkError'),
     type: 'error'
+  })
+}
+const verSelectChange = (val: string) => {
+  const winUrlTemplate = template(EASYTIER_NAME)
+  fileName.value = winUrlTemplate({
+    osType: sysInfo.value.osType,
+    osArch: sysInfo.value.osArch,
+    version: 'v' + val
   })
 }
 const checkCorePath = async () => {
@@ -213,6 +206,7 @@ onMounted(async () => {
     version: 'v' + verSelect.value
   })
   ipcRenderer.on('download-complete', () => {
+    mirrorUrlIndex.value = 0
     downLoadSuccess.value = true
     if (downLoadSuccessNotify.value) {
       ElNotification({
@@ -223,7 +217,12 @@ onMounted(async () => {
     }
     downLoadSuccessNotify.value = false
   })
-  ipcRenderer.on('download-error', () => {
+  ipcRenderer.on('download-error', async () => {
+    if (mirrorUrlIndex.value <= GITHUB_MIRROR_URL.length) {
+      mirrorUrlIndex.value += 1
+      await downLoadCore()
+      return
+    }
     if (downLoadErrorNotify.value) {
       ElNotification({
         title: t('common.reminder'),
@@ -298,6 +297,7 @@ onMounted(async () => {
             :reserve-keyword="false"
             placeholder="选择版本"
             style="width: 120px"
+            @change="verSelectChange"
           >
             <el-option
               v-for="item in verOptions"
