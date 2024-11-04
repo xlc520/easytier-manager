@@ -47,3 +47,4 @@ jobs:
             release/*.exe
             release/*.zip
             release/*.blockmap
+            release/latest*.yml

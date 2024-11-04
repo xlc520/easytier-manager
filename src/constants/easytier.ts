@@ -11,8 +11,9 @@ export const CONFIG_FILE_NAME = 'data.json'
 
 export const CORE_INFO_API = 'https://api.github.com/repos/EasyTier/EasyTier/releases/latest'
 export const GITHUB_EASYTIER = 'https://github.com/EasyTier/EasyTier'
-export const GITHUB_DOWN_URL = '/releases/latest/download'
-export const EASYTIER_NAME = '/easytier-<%= osType %>-<%= osArch %>-<%= version %>.zip'
+export const GITHUB_DOWN_URL = '/releases/download'
+export const EASYTIER_NAME =
+  '/<%= version %>/easytier-<%= osType %>-<%= osArch %>-<%= version %>.zip'
 
 export const GITHUB_MIRROR_URL = [
   {
@@ -26,6 +27,10 @@ export const GITHUB_MIRROR_URL = [
   {
     value: 'https://gh-proxy.com',
     label: 'https://gh-proxy.com'
+  },
+  {
+    value: 'https://dgithub.xyz',
+    label: 'https://dgithub.xyz'
   },
   {
     value: 'https://gh.xiu2.us.kg',
@@ -46,5 +51,9 @@ export const GITHUB_MIRROR_URL = [
   {
     value: 'https://cors.isteed.cc',
     label: 'https://cors.isteed.cc'
+  },
+  {
+    value: 'https://ghp.ci',
+    label: 'https://ghp.ci'
   }
 ]

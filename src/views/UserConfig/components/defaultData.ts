@@ -33,7 +33,8 @@ const defaultFormData: FormData | any = {
     relay_all_peer_rpc: false,
     manual_routes: undefined,
     ipv6_listener: undefined,
-    socks5: undefined
+    socks5: undefined,
+    relay_network_whitelist: '*'
   }
 }
 export default { defaultFormData }
