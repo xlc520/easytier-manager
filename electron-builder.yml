@@ -1,3 +1,4 @@
+# https://www.electron.build/configuration
 # electron-builder.yml
 # 应用的唯一标识符 包名
 appId: easytier-manager
@@ -6,9 +7,9 @@ productName: easytier-manager
 # 版权信息
 copyright: 'Copyright ©2024-present easytier-manager'
 # 应用版本
-buildVersion: 2.2.1
+buildVersion: 2.2.2
 # 内部版本
-buildNumber: 221
+buildNumber: 222
 asar: true
 # normal
 #compression: store
@@ -27,7 +28,7 @@ files:
 # Windows 平台的打包设置，包括目标架构和图标
 win:
   # icon: build/icons/icon.ico
-  requestedExecutionLevel: highestAvailable
+  requestedExecutionLevel: requireAdministrator
   target:
     - target: nsis
       arch:
