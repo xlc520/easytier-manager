@@ -48,7 +48,8 @@
   "dependencies": {
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-fs": "~2",
-    "@tauri-apps/plugin-log": "~2",
+    "@tauri-apps/plugin-http": "~2",
+    "@tauri-apps/plugin-log": "~2.0.1",
     "@tauri-apps/plugin-notification": "~2",
     "@tauri-apps/plugin-os": "~2",
     "@tauri-apps/plugin-shell": "~2",
@@ -63,6 +64,7 @@
     "echarts": "^5.5.1",
     "echarts-wordcloud": "^2.1.0",
     "element-plus": "2.8.8",
+    "fflate": "0.8.2",
     "lodash-es": "^4.17.21",
     "mitt": "^3.0.1",
     "monaco-editor": "^0.52.0",

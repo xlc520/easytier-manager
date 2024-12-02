@@ -1,19 +1,8 @@
 import { CONFIG_PATH, LOG_PATH, RESOURCE_PATH } from '@/constants/easytier'
+// import { useI18n } from '@/hooks/web/useI18n'
+import { t } from '@/utils/i18nUtil'
 import { invoke } from '@tauri-apps/api/core'
-import {
-  appConfigDir,
-  appDataDir,
-  appLocalDataDir,
-  appLogDir,
-  configDir,
-  dataDir,
-  delimiter,
-  dirname,
-  extname,
-  homeDir,
-  join,
-  resourceDir
-} from '@tauri-apps/api/path'
+import { dirname, extname, join, resourceDir } from '@tauri-apps/api/path'
 import {
   BaseDirectory,
   exists,
@@ -24,14 +13,21 @@ import {
   remove,
   writeFile
 } from '@tauri-apps/plugin-fs'
-
+import { fetch } from '@tauri-apps/plugin-http'
+import { open } from '@tauri-apps/plugin-shell'
+import { ElNotification } from 'element-plus'
+import { unzipSync } from 'fflate'
+import { attachConsole, error, info } from '@tauri-apps/plugin-log'
+// 启用 TargetKind::Webview 后，这个函数将把日志打印到浏览器控制台
+attachConsole()
+// const { t } = useI18n()
 // 获取可执行文件路径
 export const getExecutablePath = async () => {
   try {
     // 使用 Tauri 的 invoke API 调用 Rust 后端函数
     return await invoke('get_executable_path')
-  } catch (error) {
-    console.error('获取可执行文件路径时出错:', error)
+  } catch (e: any) {
+    error('获取可执行文件路径时出错:' + e.message)
   }
 }
 // 程序启动时，判断是否存在resource目录，不存在则创建
@@ -47,9 +43,9 @@ export const checkDir = async (dirPath: string = RESOURCE_PATH) => {
     if (!dirExists) {
       await mkdir(dirPath, { baseDir: BaseDirectory.Resource, recursive: true })
     }
-  } catch (error) {
-    console.error('创建resource目录时出错:', error)
-    throw error
+  } catch (e: any) {
+    error('创建resource目录时出错:' + e.message)
+    throw e
   }
 }
 
@@ -60,9 +56,8 @@ export const getResourceDir = async () => {
 }
 // 获取resource下的logs目录
 export const getLogsDir = async () => {
-  const logsDir = await join(await resourceDir(), LOG_PATH)
-  await checkDir(logsDir)
-  return logsDir
+  await checkDir(LOG_PATH)
+  return await join(await resourceDir(), LOG_PATH)
 }
 // 获取 config目录， RESOURCE_PATH+CONFIG_PATH
 // export const getConfigPath = async () => {
@@ -118,9 +113,9 @@ export async function writeFileContent(
     }
 
     await writeFile(filePath, content, finalOptions)
-  } catch (error) {
-    console.error('写入文件时出错:', error)
-    throw error
+  } catch (e: any) {
+    error('写入文件时出错:' + e.message)
+    throw e
   }
 }
 
@@ -161,8 +156,8 @@ export async function readFileContent(
       const content = await readTextFile(filePath, { baseDir })
       return content
     }
-  } catch (error) {
-    console.error(`Error reading file ${filePath}:`, error)
+  } catch (e: any) {
+    error(`Error reading file ${filePath}:` + e.message)
     return ''
   }
 }
@@ -172,8 +167,8 @@ export const listFiles = async (targetDir: string = RESOURCE_PATH) => {
     await checkDir(targetDir)
     const entries = await readDir(targetDir, { baseDir: BaseDirectory.Resource })
     return entries.map((entry) => entry.name)
-  } catch (error) {
-    console.error('Error listing resource files:', error)
+  } catch (e: any) {
+    error('Error listing resource files:' + e.message)
     return []
   }
 }
@@ -185,8 +180,8 @@ export const listTomlFiles = async (targetDir: string = CONFIG_PATH) => {
 
     const entries = await readDir(targetDir, { baseDir: BaseDirectory.Resource })
     return entries.filter((entry) => entry.name.endsWith('.toml')).map((entry) => entry.name)
-  } catch (error) {
-    console.error('Error listing resource files:', error)
+  } catch (e: any) {
+    error('Error listing resource files:' + e.message)
     return []
   }
 }
@@ -209,124 +204,67 @@ export const getConfigJsonObj = async () => {
       baseDir: BaseDirectory.Resource
     })
     return JSON.parse(configJson as string)
-  } catch (error) {
-    console.error('读取配置文件失败:', error)
+  } catch (e: any) {
+    error('读取配置文件失败:' + e.message)
     await writeConfigJsonObj({})
     return {}
   }
 }
 
-// 根据指定文件或目录，删除文件或目录
+/**
+ * 强制删除指定路径的文件或目录
+ * @param path 路径
+ */
 export const deleteFileOrDir = async (path: string) => {
-  await remove(path, { baseDir: BaseDirectory.Resource })
+  await remove(path, { baseDir: BaseDirectory.Resource, recursive: true })
 }
 
-// 获取路径值
-export const getPathVal = async () => {
-  // configDir C:\Users\Administrator\AppData\Roaming
-  const configDirVal = await configDir()
-  console.log('configDir', configDirVal)
-
-  // dataDir C:\Users\Administrator\AppData\Roaming
-  const dataDirVal = await dataDir()
-  console.log('dataDir', dataDirVal)
-
-  // resourceDir E:\source\rust\EasyTier\target\debug
-  const resourceDirVal = await resourceDir()
-  console.log('resourceDir', resourceDirVal)
-
-  // E:\source\rust\EasyTier\target\debug\easytier-gui-pro.exe
-  const executableDirVal = await getExecutablePath()
-  console.log('executableDir', executableDirVal)
-
-  // appConfigDir C:\Users\Administrator\AppData\Roaming\com.easytier-gui-pro
-  const appConfigDirVal = await appConfigDir()
-  console.log('appConfigDir', appConfigDirVal)
-
-  // appDataDir C:\Users\Administrator\AppData\Roaming\com.easytier-gui-pro
-  const appDataDirVal = await appDataDir()
-  console.log('appDataDir', appDataDirVal)
-
-  // appLocalDataDir C:\Users\Administrator\AppData\Local\com.easytier-gui-pro
-  const appLocalDataDirVal = await appLocalDataDir()
-  console.log('appLocalDataDir', appLocalDataDirVal)
-
-  // appLogDir C:\Users\Administrator\AppData\Local\com.easytier-gui-pro\logs
-  const appLogDirVal = await appLogDir()
-  console.log('appLogDir', appLogDirVal)
-
-  // homeDir C:\Users\Administrator
-  const homeDirVal = await homeDir()
-  console.log('homeDir', homeDirVal)
-
-  // delimiter ;
-  const delimiterVal = delimiter()
-  console.log('delimiter', delimiterVal)
-}
-
-import { ElMessage } from 'element-plus'
-import request from '@/axios'
-import type { AxiosResponse, AxiosProgressEvent } from 'axios'
-
-type ProgressCallback = (fileUrl: string, progress: number) => void
-
-// 防抖函数
-function debounce<ProgressCallback extends (...args: any) => any>(
-  func: ProgressCallback,
-  wait: number
-): ProgressCallback {
-  let startTime = Date.now()
-  return function (this: any, ...args: Parameters<ProgressCallback>) {
-    if (Date.now() - wait >= startTime) {
-      func.apply(this, args)
-      startTime = Date.now()
-    }
-  } as ProgressCallback
-}
-
-export async function downloadFile(
-  fileUrl: string,
-  updateProgressBar: ProgressCallback
-): Promise<void> {
+/**
+ * 下载文件
+ * @param fileUrl 文件URL
+ * @returns 下载是否成功
+ * 使用示例：
+ * ```typescript
+ * const success = await downloadFile('https://example.com/file.zip');
+ * ```
+ */
+export async function downloadFile(fileUrl: string): Promise<boolean> {
   try {
-    const updateProgress = debounce(updateProgressBar, 500)
-    const response: AxiosResponse | any = await request.request({
-      url: fileUrl,
-      method: 'get',
-      responseType: 'blob',
-      onDownloadProgress: (progressEvent: AxiosProgressEvent) => {
-        const total = progressEvent.total
-        const current = progressEvent.loaded
-        if (total) {
-          const percentage = Math.floor((current / total) * 100)
-          updateProgress(fileUrl, percentage)
-        }
-      }
+    ElNotification({
+      title: '下载中',
+      message: `开始下载`,
+      type: 'info',
+      duration: 8000
     })
-
-    if (response.headers['content-type'].startsWith('application/json')) {
-      const resCode = response.data.code
-      if (resCode !== 0) {
-        ElMessage.warning(response.data.msg)
-      }
-      return
+    info('开始下载:' + fileUrl)
+    // 使用 Tauri 的 http plugin
+    const response = await fetch(fileUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.95 Safari/537.36'
+      },
+      connectTimeout: 30000
+      // responseType: ResponseType.Binary,
+      // 添加下载进度监听
+      // onDownloadProgress: (progress) => {
+      //   if (progress.total) {
+      //     const percentage = Math.floor((progress.loaded / progress.total) * 100)
+      //     updateProgressBar(fileUrl, percentage)
+      //   }
+      // }
+    })
+    if (!response.ok) {
+      ElNotification({
+        title: t('common.reminder'),
+        message: t('easytier.downLoadError'),
+        type: 'error'
+      })
+      return false
     }
 
-    // 获取文件名
-    let filename = ''
-    const disposition = response.headers['content-disposition']
-    if (disposition) {
-      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
-      const matches = filenameRegex.exec(disposition)
-      if (matches && matches[1]) {
-        filename = matches[1].replace(/['"]/g, '')
-      }
-    }
-    console.log('filename', filename)
-    // 如果没有获取到文件名，从 URL 中提取
-    if (!filename) {
-      filename = fileUrl.split('/').pop() || 'downloaded_file'
-    }
+    // 获取文件名从 URL 中提取
+    const filename = fileUrl.split('/').pop() || 'downloaded_file'
 
     // 构建保存路径
     const savePath = await join(RESOURCE_PATH, filename)
@@ -334,25 +272,151 @@ export async function downloadFile(
     // 确保目录存在
     await checkDir(RESOURCE_PATH)
 
-    // 将文件内容转换为 Uint8Array
-    const arrayBuffer = await response.data.arrayBuffer()
-    const uint8Array = new Uint8Array(arrayBuffer)
+    // 获取二进制数据
+    const uint8Array = new Uint8Array(await response.arrayBuffer())
+    info('开始写入文件:' + savePath)
 
     // 写入文件
     await writeFileContent(savePath, uint8Array, {
       baseDir: BaseDirectory.Resource
     })
 
-    ElMessage.success('文件下载成功')
-  } catch (error) {
-    console.error('下载文件时出错:', error)
-    ElMessage.warning('下载文件失败，请稍后再试')
+    ElNotification({
+      title: t('common.reminder'),
+      message: t('easytier.downLoadSuccess'),
+      type: 'success'
+    })
+    return true
+  } catch (e: any) {
+    error('下载文件时出错:' + e.message)
+    ElNotification({
+      title: t('common.reminder'),
+      message: t('easytier.downLoadError'),
+      type: 'error'
+    })
+    return false
   }
 }
 
 /**
- * 更新页面中的进度条
+ * 1.在资源管理器中打开指定目录
+ * 2.在浏览器中打开指定网址
+ * @param path 要打开的目录路径或网址
  */
-const updateProgressBar = (file: string, percentage: number) => {
-  console.log(`Download progress: ${percentage}%`)
+export async function openPath(path: string) {
+  try {
+    await open(path)
+  } catch (e: any) {
+    error('打开资源管理器失败:' + e.message)
+    ElNotification({
+      title: t('common.reminder'),
+      message: t('easytier.openDirError'),
+      type: 'error'
+    })
+  }
+}
+
+/**
+ * 解压文件到指定目录，支持处理多层目录
+ * @param zipPath 压缩文件路径（相对于 Resource 目录）
+ * @param destPath 解压目标目录（相对于 Resource 目录）
+ * @param keepDir   是否保留原路径
+ * @returns Promise<boolean> 解压是否成功
+ */
+export async function extractFile(
+  zipPath: string,
+  destPath: string,
+  keepDir: boolean = false
+): Promise<boolean> {
+  try {
+    // 读取zip文件内容  resource\easytier-windows-x86_64-v2.0.3.zip
+    const zipContent = (await readFileContent(zipPath, {
+      baseDir: BaseDirectory.Resource,
+      asBinary: true
+    })) as Uint8Array
+
+    // 使用 fflate 解压
+    const files = unzipSync(zipContent)
+
+    // 分析目录结构，找到最深的公共目录
+    const paths = Object.keys(files)
+    // easytier-windows-x86_64/
+    const commonPrefix = await findCommonPrefix(paths)
+    // 写入解压后的文件
+    for (const [filePath, fileData] of Object.entries(files)) {
+      try {
+        // filePath:easytier-windows-x86_64/easytier-cli.exe
+        // 如果文件在子目录中，去掉公共前缀  easytier-cli.exe
+        const relativePath = commonPrefix ? filePath.replace(commonPrefix, '') : filePath
+        // 跳过目录项
+        if (relativePath.endsWith('/')) continue
+
+        // 构建目标文件路径 resource\easytier-cli.exe
+        let targetPath: string
+        if (keepDir) {
+          targetPath = await join(destPath, filePath)
+        } else {
+          targetPath = await join(destPath, relativePath)
+        }
+        // 确保目标目录存在
+        await checkDir(await dirname(targetPath))
+
+        // 写入文件
+        await writeFileContent(targetPath, fileData, {
+          baseDir: BaseDirectory.Resource
+        })
+      } catch (e: any) {
+        error(`处理文件 ${filePath} 时出错:` + e.message)
+      }
+    }
+
+    ElNotification({
+      title: t('common.reminder'),
+      message: t('easytier.extractSuccess'),
+      type: 'success'
+    })
+    // 删除zip文件
+    await deleteFileOrDir(zipPath)
+    // 删除解压出来的目录
+    // const dirPath = await join(RESOURCE_PATH, commonPrefix.replace('/', ''), '/')
+    // info('dirPath', dirPath)
+    // await deleteFileOrDir(dirPath)
+    return true
+  } catch (e: any) {
+    error('解压文件时出错:' + e.message)
+    ElNotification({
+      title: t('common.reminder'),
+      message: t('easytier.extractError'),
+      type: 'error',
+      duration: 5000
+    })
+    return false
+  }
+}
+
+/**
+ * 查找所有路径的公共前缀目录
+ * @param paths 路径数组
+ * @returns 公共前缀
+ */
+async function findCommonPrefix(paths: string[]): Promise<string> {
+  if (paths.length === 0) return ''
+  if (paths.length === 1) return await dirname(paths[0])
+
+  // 分割所有路径
+  const parts = paths.map((p) => p.split('/').filter(Boolean))
+
+  const prefix: string[] = []
+  const firstParts = parts[0]
+
+  for (let i = 0; i < firstParts.length; i++) {
+    const part = firstParts[i]
+    if (parts.every((p) => p[i] === part)) {
+      prefix.push(part)
+    } else {
+      break
+    }
+  }
+
+  return prefix.length > 0 ? `${prefix.join('/')}/` : ''
 }

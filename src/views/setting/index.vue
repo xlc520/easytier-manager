@@ -1,22 +1,27 @@
 <script setup lang="tsx">
 import { ContentWrap } from '@/components/ContentWrap'
-import { BIN_PATH, LOG_PATH } from '@/constants/easytier'
+import {
+  BIN_PATH,
+  EASYTIER_NAME,
+  GITHUB_DOWN_URL,
+  GITHUB_EASYTIER,
+  GITHUB_MIRROR_URL,
+  LOG_PATH,
+  RESOURCE_PATH,
+  VERSION_PREFIX
+} from '@/constants/easytier'
 import { useI18n } from '@/hooks/web/useI18n'
-import { downloadFile } from '@/utils/fileUtil'
+import { downloadFile, extractFile, openPath } from '@/utils/fileUtil'
+import { runEasyTierCli } from '@/utils/shellUtil'
+import { getAppVersion, getArch, getOsType } from '@/utils/sysUtil'
+import { appLogDir, join, resourceDir } from '@tauri-apps/api/path'
 import { useClipboard } from '@vueuse/core'
-import { ElInput, ElMessage, ElNotification } from 'element-plus'
-import path from 'path'
+import { ElInput, ElMessage, ElMessageBox, ElNotification } from 'element-plus'
+import { template } from 'lodash-es'
 import { onMounted, reactive, ref, unref } from 'vue'
 
 const { t } = useI18n()
-
-// const sysInfo = ref<SysInfo>({ osArch: '', osType: '', osVersion: '' })
-const userDataPath = ref('')
 const fileName = ref('')
-const mirrorUrlIndex = ref(0)
-const downLoadSuccess = ref(false)
-const downLoadSuccessNotify = ref(true)
-const downLoadErrorNotify = ref(true)
 const checkCorePathSuccess = ref(false)
 const form = reactive({
   corePath: '',
@@ -59,79 +64,81 @@ const verOptions = [
 ]
 const mirrorUrlSelect = ref<string>('')
 
-// const getDownloadUrl = async () => {
-//   const response = await getGithubVer()
-//   log.log('response', response)
-//   const winUrlTemplate = _.template(coreUrl)
-//   const downUrl = winUrlTemplate({
-//     osType: sysInfo.value.osType,
-//     osArch: sysInfo.value.osArch,
-//     version: res.tag_name
-//   })
-//   log.log('下载URL:', downUrl)
-//   return downUrl
-// }
 const downLoadCore = async () => {
-  await downloadFile(
-    'https://sw.pcmgr.qq.com/c2090d9ff413c5a0739f9169ae20b76e/67498952/spcmgr/download/WeChatSetup_3.9.12.17.exe',
-    (fileUrl, progress) => {
-      console.log(`Download progress: ${progress}%`)
+  for (let i = 0; i < GITHUB_MIRROR_URL.length; i++) {
+    let url =
+      GITHUB_MIRROR_URL[i].value +
+      GITHUB_EASYTIER +
+      GITHUB_DOWN_URL +
+      '/' +
+      VERSION_PREFIX +
+      verSelect.value +
+      fileName.value
+    const res = await downloadFile(url)
+    if (res) {
+      return
+    } else {
+      // 如果所有加速链接都下载失败，则尝试直接下载
+      if (i === GITHUB_MIRROR_URL.length - 1) {
+        url =
+          GITHUB_EASYTIER +
+          GITHUB_DOWN_URL +
+          '/' +
+          VERSION_PREFIX +
+          verSelect.value +
+          fileName.value
+        const res = await downloadFile(url)
+        if (res) {
+          return
+        } else {
+          ElMessageBox.confirm('所有下载链接下载失败，请手动下载！', {
+            cancelButtonText: '取消',
+            confirmButtonText: '手动下载',
+            type: 'error',
+            // 点击确定则打开Github下载页面
+            callback: async (value) => {
+              if (value === 'confirm') {
+                await openPath(GITHUB_EASYTIER)
+              }
+            }
+          })
+        }
+      }
     }
-  )
-  // ElNotification({
-  //   title: '下载中',
-  //   message: `开始使用加速源[${mirrorUrlIndex.value + 1}]下载`,
-  //   type: 'info',
-  //   duration: 8000
-  // })
-  // downLoadSuccessNotify.value = true
-  // downLoadErrorNotify.value = true
-  // await downloadEasyTier(fileName.value, GITHUB_MIRROR_URL[mirrorUrlIndex.value].value)
+  }
 }
 const installCore = async () => {
-  // const res = await extractZip(fileName.value, BIN_PATH)
-  // if (res) {
-  //   ElNotification({
-  //     title: t('common.reminder'),
-  //     message: t('common.accessSuccess'),
-  //     type: 'success'
-  //   })
-  //   return
-  // }
-  // ElNotification({
-  //   title: t('common.reminder'),
-  //   message: t('error.networkError'),
-  //   type: 'error'
-  // })
+  const zipPath = await join(RESOURCE_PATH, fileName.value.replace('/', ''))
+  await extractFile(zipPath, RESOURCE_PATH)
 }
 const verSelectChange = (val: string) => {
-  // const winUrlTemplate = template(EASYTIER_NAME)
-  // fileName.value = winUrlTemplate({
-  //   osType: sysInfo.value.osType,
-  //   osArch: sysInfo.value.osArch,
-  //   version: 'v' + val
-  // })
+  const winUrlTemplate = template(EASYTIER_NAME)
+  fileName.value = winUrlTemplate({
+    osType: getOsType(),
+    osArch: getArch(),
+    version: VERSION_PREFIX + val
+  })
 }
 const checkCorePath = async () => {
-  // const ver = await execCli('-V')
-  // if (ver && ver !== 403) {
-  //   form.coreVersion = ver
-  //   checkCorePathSuccess.value = true
-  // } else {
-  //   form.coreVersion = ''
-  //   checkCorePathSuccess.value = false
-  //   ElNotification({
-  //     title: t('common.reminder'),
-  //     message: t('easytier.coreEror'),
-  //     type: 'error',
-  //     duration: 4000
-  //   })
-  // }
+  const res = await runEasyTierCli(['-V'])
+  if (res && res !== 403) {
+    form.coreVersion = res
+    checkCorePathSuccess.value = true
+  } else {
+    form.coreVersion = ''
+    checkCorePathSuccess.value = false
+    ElNotification({
+      title: t('common.reminder'),
+      message: t('easytier.coreEror'),
+      type: 'error',
+      duration: 4000
+    })
+  }
 }
 const copyCorePath = async () => {
   // 拷贝
   const { copy, copied, isSupported } = useClipboard({
-    source: path.join(userDataPath.value, BIN_PATH),
+    source: await join(await resourceDir(), BIN_PATH),
     legacy: true
   })
   if (!isSupported) {
@@ -144,13 +151,13 @@ const copyCorePath = async () => {
   }
 }
 const openCorePath = async () => {
-  // const { shell } = require('electron')
-  // await shell.openPath(path.join(userDataPath.value))
+  const resourcePath = await join(await resourceDir(), RESOURCE_PATH)
+  await openPath(resourcePath)
 }
 const copyLogPath = async () => {
   // 拷贝
   const { copy, copied, isSupported } = useClipboard({
-    source: path.join(userDataPath.value, LOG_PATH),
+    source: await join(await resourceDir(), LOG_PATH),
     legacy: true
   })
   if (!isSupported) {
@@ -163,11 +170,12 @@ const copyLogPath = async () => {
   }
 }
 const openLogPath = async () => {
-  // const { shell } = require('electron')
-  // await shell.openPath(path.join(userDataPath.value, LOG_PATH))
+  const resourcePath = await join(await resourceDir(), LOG_PATH)
+  await openPath(resourcePath)
 }
-const openInBrowser = (url: string) => {
-  // shell.openExternal(url)
+const openLogPath2 = async () => {
+  const resourcePath = await join(await appLogDir())
+  await openPath(resourcePath)
 }
 const checkUpdate = async () => {
   // ElNotification({
@@ -178,62 +186,26 @@ const checkUpdate = async () => {
   // })
   // await checkForUpdatesAndNotify()
 }
-const changeAppLogLevel = async () => {
-  // await setLogLevel(form.appLogLevel)
-}
+// const changeAppLogLevel = async () => {
+//   // await setLogLevel(form.appLogLevel)
+// }
 onMounted(async () => {
-  // sysInfo.value = await getSysInfo()
-  // userDataPath.value = await getUserDataPath()
-  // const ver = await execCli('-V')
-  // if (ver && ver !== 403) {
-  //   form.coreVersion = ver
-  // }
-  // form.corePath = path.join(userDataPath.value, BIN_PATH)
-  // form.logPath = path.join(userDataPath.value, LOG_PATH)
-  // form.appVersion = await getVersion()
+  const ver = await runEasyTierCli(['-V'])
+  if (ver && ver !== 403) {
+    form.coreVersion = ver
+  }
+  form.corePath = await join(await resourceDir(), BIN_PATH)
+  form.logPath = await join(await resourceDir(), LOG_PATH)
+  form.appVersion = await getAppVersion()
   // form.appLogLevel = await getLogLevel()
-  // const winUrlTemplate = template(EASYTIER_NAME)
-  // // easytier-windows-x86_64-v2.0.3.zip
-  // // easytier-win32-x64-v2.0.3.zip
-  // fileName.value = winUrlTemplate({
-  //   osType: sysInfo.value.osType,
-  //   osArch: sysInfo.value.osArch,
-  //   version: 'v' + verSelect.value
-  // })
-  // ipcRenderer.on('download-complete', () => {
-  //   mirrorUrlIndex.value = 0
-  //   downLoadSuccess.value = true
-  //   if (downLoadSuccessNotify.value) {
-  //     ElNotification({
-  //       title: t('common.reminder'),
-  //       message: t('easytier.downLoadSuccess'),
-  //       type: 'success'
-  //     })
-  //   }
-  //   downLoadSuccessNotify.value = false
-  // })
-  // ipcRenderer.on('download-error', async () => {
-  //   if (mirrorUrlIndex.value <= GITHUB_MIRROR_URL.length) {
-  //     mirrorUrlIndex.value += 1
-  //     await downLoadCore()
-  //     return
-  //   }
-  //   if (downLoadErrorNotify.value) {
-  //     ElNotification({
-  //       title: t('common.reminder'),
-  //       message: t('easytier.downLoadError'),
-  //       type: 'error'
-  //     })
-  //   }
-  //   downLoadErrorNotify.value = false
-  // })
-  // ipcRenderer.on('update-message', (_event, arg) => {
-  //   ElNotification({
-  //     title: t('common.reminder'),
-  //     message: arg,
-  //     type: 'info'
-  //   })
-  // })
+  const winUrlTemplate = template(EASYTIER_NAME)
+  // easytier-windows-x86_64-v2.0.3.zip
+  // easytier-win32-x64-v2.0.3.zip
+  fileName.value = winUrlTemplate({
+    osType: getOsType(),
+    osArch: getArch(),
+    version: VERSION_PREFIX + verSelect.value
+  })
 })
 </script>
 
@@ -327,10 +299,13 @@ onMounted(async () => {
           </template>
           {{ form.logPath }}<br />
           <el-button type="primary" @click="openLogPath">{{ t('easytier.openLogPath') }}</el-button>
+          <el-button type="primary" @click="openLogPath2">{{
+            t('easytier.openLogPath')
+          }}</el-button>
           <el-button type="info" @click="copyLogPath">{{ t('easytier.copyLogPath') }}</el-button>
         </el-descriptions-item>
 
-        <el-descriptions-item>
+        <!-- <el-descriptions-item>
           <template #label>
             <div class="cell-item">
               <Icon icon="icon-park-solid:log" />
@@ -348,7 +323,7 @@ onMounted(async () => {
             >{{ t('formDemo.change') }}
           </el-button>
           当软件重启时会恢复默认
-        </el-descriptions-item>
+        </el-descriptions-item> -->
 
         <el-descriptions-item>
           <template #label>
@@ -358,14 +333,12 @@ onMounted(async () => {
             </div>
           </template>
           {{ t('easytier.githubManage') }} :
-          <el-text
-            type="primary"
-            @click="openInBrowser('https://github.com/xlc520/easytier-manager')"
+          <el-text type="primary" @click="openPath('https://github.com/xlc520/easytier-manager')"
             >https://github.com/xlc520/easytier-manager
           </el-text>
           <br />
           {{ t('easytier.githubCore') }} :
-          <el-text type="primary" @click="openInBrowser('https://github.com/EasyTier/EasyTier')">
+          <el-text type="primary" @click="openPath('https://github.com/EasyTier/EasyTier')">
             https://github.com/EasyTier/EasyTier
           </el-text>
         </el-descriptions-item>
@@ -378,9 +351,9 @@ onMounted(async () => {
             </div>
           </template>
           {{ form.appVersion }}
-          <el-button class="ml-5" type="info" @click="checkUpdate"
+          <!-- <el-button class="ml-5" type="info" @click="checkUpdate"
             >{{ t('easytier.checkUpdate') }}
-          </el-button>
+          </el-button> -->
         </el-descriptions-item>
       </el-descriptions>
     </ContentWrap>

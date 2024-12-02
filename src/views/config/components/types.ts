@@ -16,9 +16,9 @@ interface ConsoleLogger {
 }
 
 interface FileLogger {
-  level?: string | undefined
-  file?: string | undefined
-  dir?: string | undefined
+  level?: string | undefined | null
+  file?: string | undefined | null
+  dir?: string | undefined | null
 }
 
 interface Flags {
@@ -41,7 +41,7 @@ interface Flags {
 }
 
 interface FormData {
-  hostname?: string | undefined
+  hostname?: string | undefined | null
   instance_name?: string | undefined
   network_identity: Partial<NetworkIdentity>
   dhcp?: boolean | undefined

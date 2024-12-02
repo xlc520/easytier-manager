@@ -13,10 +13,12 @@ import {
   readFileContent,
   writeFileContent
 } from '@/utils/fileUtil'
+import { getHostname } from '@/utils/sysUtil'
+import { attachConsole, error } from '@tauri-apps/plugin-log'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { cloneDeep } from 'lodash-es'
 import * as toml from 'smol-toml'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import DefaultData from './components/defaultData'
 import Form from './components/Form.vue'
 
@@ -33,7 +35,7 @@ const editType = ref('')
 const saveLoading = ref(false)
 const formRef = ref()
 const formData = ref<FormData>(cloneDeep(DefaultData.defaultFormData))
-const configFileName = ref('')
+const configFileName = ref<string | null>(null)
 const errorMessage = ref('')
 const logsDir = ref('')
 const getConfigList = async () => {
@@ -44,6 +46,7 @@ const getConfigList = async () => {
     tmpList.push({ configFileName: configName, fileName: f })
   }
   easyTierStore.setConfigList(tmpList)
+
   return tmpList
 }
 // const serviceStatusDict = (status: string) => {
@@ -93,10 +96,10 @@ const AddAction = () => {
   dataConfig.value = ''
   dialogVisible.value = true
 }
-const AddFormAction = () => {
+const AddFormAction = async () => {
   dialogTitle.value = t('easytier.addNetConfigForm')
   formData.value = cloneDeep(DefaultData.defaultFormData)
-  configFileName.value = ''
+  configFileName.value = await getHostname()
   actionType.value = 'add'
   editType.value = 'form'
   dialogVisible.value = true
@@ -160,8 +163,8 @@ const addConfigAction = async () => {
         type: 'success',
         duration: 2000
       })
-    } catch (error) {
-      console.log('表单新增报错：' + error)
+    } catch (e: any) {
+      error('表单新增报错：' + e.message)
       ElNotification({
         title: t('common.reminder'),
         message: '表单新增报错',
@@ -194,8 +197,8 @@ const addConfigAction = async () => {
         type: 'success',
         duration: 2000
       })
-    } catch (error: any) {
-      console.error('Error writing file:', error)
+    } catch (e: any) {
+      error('Error writing file:' + e.message)
       ElNotification({
         title: t('common.reminder'),
         message: error.message,
@@ -250,8 +253,8 @@ const saveConfigAction = async () => {
           type: 'success',
           duration: 2000
         })
-      } catch (error) {
-        console.log('表单保存报错：' + error)
+      } catch (e: any) {
+        error('表单保存报错：' + e.message)
         ElNotification({
           title: t('common.reminder'),
           message: '表单保存报错',
@@ -286,8 +289,8 @@ const saveConfigAction = async () => {
         type: 'success',
         duration: 2000
       })
-    } catch (error: any) {
-      console.error('Error writing file:', error.message)
+    } catch (e: any) {
+      error('Error writing file:' + e.message)
       ElNotification({
         title: t('common.reminder'),
         message: error.message,
@@ -439,28 +442,14 @@ const delConfig = async (row?: any) => {
 //   //   })
 //   //   .finally(async () => await getConfigList())
 // }
-const testAction = async () => {
-  // const name = easyTierStore.getLastRunConfigName()
-  // console.log('name', name)
-  // const fileName = await basename('data/config.toml')
-  // console.log('fileName', fileName)
-  // const fileName2 = await dirname('data/config.toml')
-  // console.log('fileName2', fileName2)
-  // await getPathVal()
-  // await executeBack('easytier-core')
-}
+watch(configFileName, (value) => {
+  formData.value.file_logger.file = value
+})
 onMounted(async () => {
+  // 启用 TargetKind::Webview 后，这个函数将把日志打印到浏览器控制台
+  await attachConsole()
   await getConfigList()
   logsDir.value = await getLogsDir()
-  // easyTierStore.setDefaultFormData(DefaultData.defaultFormData)
-  // const sysInfo = await getSysInfo()
-  // easyTierStore.setOs(sysInfo.osType)
-  // await writeFileContent('config.json', '{"setting": "value"}')
-  // // 从特定目录读取
-  // const configContent = await readFileContent('config.json', {
-  //   baseDir: BaseDirectory.AppConfig
-  // })
-  // console.log('configContent:', configContent)
 })
 </script>
 
@@ -475,7 +464,6 @@ onMounted(async () => {
         <BaseButton type="success" @click="refreshAction"
           >{{ t('easytier.reloadNetConfig') }}
         </BaseButton>
-        <!-- <BaseButton type="info" @click="testAction">测试 </BaseButton> -->
       </div>
       <el-table
         :data="easyTierStore.configList"

@@ -20,7 +20,7 @@ const defaultFormData: FormData | any = {
   },
   flags: {
     default_protocol: 'tcp',
-    dev_name: 'easytier',
+    dev_name: '',
     disable_encryption: false,
     disable_ipv6: false,
     latency_first: true,

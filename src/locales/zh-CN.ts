@@ -669,6 +669,9 @@ export default {
     restricted: 'Nat2受限',
     portRestricted: 'Nat3端口受限',
     symmetric: 'Nat4对称',
-    unknown: '未知'
+    unknown: '未知',
+    openDirError: '打开目录失败',
+    extractError: '解压失败',
+    extractSuccess: '解压成功'
   }
 }

@@ -1,5 +1,3 @@
-import { RESOURCE_PATH } from '@/constants/easytier'
-import { getConfigJsonObj, writeConfigJsonObj } from '@/utils/fileUtil'
 import { resourceDir } from '@tauri-apps/api/path'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
@@ -11,7 +9,7 @@ export const useEasyTierStore = defineStore(
     const configList = ref<RunningItem[]>([])
     const fileList = ref([])
     const runningList = ref<RunningItem[]>([])
-    const lastRunConfig = ref('')
+    const lastRunConfig = ref<RunningItem>()
     const allConfigOptions = ref([])
     // 带有文件后缀
     const fileListNoSuffix = ref([])
@@ -52,7 +50,7 @@ export const useEasyTierStore = defineStore(
     }
     const getLastRunConfigName = () => {
       if (lastRunConfig.value) {
-        return lastRunConfig.value
+        return lastRunConfig.value.configFileName
       }
       const storageConfigName = JSON.parse(localStorage.getItem('lastRunConfigName') || '{}')
       if (Object.keys(storageConfigName).length !== 0) {

@@ -348,6 +348,7 @@
 import { onMounted, PropType, reactive, ref, toRefs, watch } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { getLogsDir } from '@/utils/fileUtil'
+import { getHostname } from '@/utils/sysUtil'
 
 const { t } = useI18n()
 const props = defineProps({
@@ -393,15 +394,15 @@ const rules = reactive({
       trigger: ['blur', 'change'],
       message: '允许：字母 数字 符号'
     }
-  ],
-  'file_logger.file': [
-    { required: true, trigger: ['blur', 'change'], message: '请输入日志文件名' },
-    {
-      pattern: /^[^一-龥]+$/,
-      trigger: ['blur', 'change'],
-      message: '允许：字母 数字 _ -'
-    }
   ]
+  // 'file_logger.file': [
+  //   { required: true, trigger: ['blur', 'change'], message: '请输入日志文件名' },
+  //   {
+  //     pattern: /^[^一-龥]+$/,
+  //     trigger: ['blur', 'change'],
+  //     message: '允许：字母 数字 _ -'
+  //   }
+  // ]
 })
 const peersOptions = reactive([
   {
@@ -508,7 +509,6 @@ watch(
   (value) => {
     if (value) {
       formData.value.instance_name = value
-      formData.value.file_logger.file = value
     }
   }
 )
@@ -537,6 +537,9 @@ onMounted(async () => {
     formData.value.proxy_network[0].cidr
   ) {
     formData.value.proxy_network!.forEach((p) => proxyNetwork.value.push(p.cidr))
+  }
+  if (!formData.value.hostname || formData.value.hostname === '') {
+    formData.value.hostname = await getHostname()
   }
   formData.value.file_logger.dir = await getLogsDir()
 })

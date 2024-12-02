@@ -1,4 +1,4 @@
-import { platform } from '@tauri-apps/plugin-os'
+import { arch, hostname, platform, type } from '@tauri-apps/plugin-os'
 import { locale } from '@tauri-apps/plugin-os'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import {
@@ -7,6 +7,7 @@ import {
   sendNotification,
   type Options
 } from '@tauri-apps/plugin-notification'
+import { getVersion } from '@tauri-apps/api/app'
 
 /**
  * 操作系统平台
@@ -18,6 +19,37 @@ export const getPlatform = () => {
   return currentPlatform
 }
 
+/**
+ * 操作系统类型
+ * @returns 返回一个描述使用的特定操作系统的字符串。该值在编译时设置。
+ * 可能的值有 `'linux'` on Linux, `'macos'` on macOS, `'windows'` on Windows, `'ios'` on iOS and `'android'` on Android.
+ */
+export const getOsType = () => {
+  const currentOsType = type()
+  return currentOsType
+}
+
+/**
+ * 获取系统架构
+ * @returns 返回一个描述系统架构的字符串。该值在编译时设置。
+ * 可能的值有 `'x86'`, `'x86_64'`, `'arm'`, `'aarch64'`, `'mips'`, `'mips64'`, `'powerpc'`, `'powerpc64'`, `'riscv64'`, `'s390x'`, `'sparc64'`.
+ */
+export const getArch = () => {
+  const currentArch = arch()
+  return currentArch
+}
+/**
+ * 获取系统名
+ * @returns 返回当前系统名
+ */
+export const getHostname = async () => {
+  const currentHostname = await hostname()
+  return currentHostname
+}
+/**
+ * 获取当前系统语言
+ * @returns 返回当前系统语言
+ */
 export const getLocale = async () => {
   const currentLocale = await locale()
   console.log(currentLocale)
@@ -74,4 +106,12 @@ export const notify = async (
   if (permissionGranted) {
     sendNotification({ title, body, silent: true, ...options })
   }
+}
+
+/**
+ * 获取当前App的版本
+ */
+export const getAppVersion = async () => {
+  const appVersion = await getVersion()
+  return appVersion
 }

@@ -28,13 +28,13 @@ interface NetworkConfig {
 }
 
 interface FileLoggerConfig {
-  level: string
-  file: string
-  dir: string
+  level: string | null
+  file: string | null
+  dir: string | null
 }
 
 interface ConsoleLoggerConfig {
-  level: string
+  level: string | null
 }
 
 interface VpnPortalConfig {

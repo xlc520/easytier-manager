@@ -43,6 +43,7 @@
     "log:default",
     "log:allow-log",
     "os:default",
+    "os:allow-hostname",
     "core:tray:default",
     "core:tray:allow-new",
     "core:tray:allow-remove-by-id",
@@ -111,6 +112,16 @@
         },
         {
           "args": true,
+          "cmd": "cmd",
+          "name": "cmd"
+        },
+        {
+          "args": true,
+          "cmd": "nohup",
+          "name": "nohup"
+        },
+        {
+          "args": true,
           "cmd": "netsh",
           "name": "netsh"
         },
@@ -130,21 +141,14 @@
           "name": "kill"
         },
         {
-          "name": "exec-sh",
-          "cmd": "sh",
-          "args": [
-            "-c",
-            {
-              "validator": "\\S+"
-            }
-          ],
-          "sidecar": false
+          "args": true,
+          "cmd": "wmic",
+          "name": "wmic"
         },
         {
-          "name": "any",
-          "cmd": "**",
           "args": true,
-          "sidecar": false
+          "cmd": "ps",
+          "name": "ps"
         }
       ]
     },
@@ -160,6 +164,54 @@
           "args": true,
           "cmd": "$RESOURCE/resource/easytier-cli",
           "name": "easytier-cli"
+        },
+        {
+          "args": true,
+          "cmd": "cmd",
+          "name": "cmd"
+        },
+        {
+          "args": true,
+          "cmd": "nohup",
+          "name": "nohup"
+        }
+      ]
+    },
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://github.com/*"
+        },
+        {
+          "url": "https://ghp.ci/*"
+        },
+        {
+          "url": "https://ghproxy.net/*"
+        },
+        {
+          "url": "https://ghproxy.cn/*"
+        },
+        {
+          "url": "https://dgithub.xyz/*"
+        },
+        {
+          "url": "https://gh-proxy.com/*"
+        },
+        {
+          "url": "https://gh.xiu2.us.kg/*"
+        },
+        {
+          "url": "https://ghproxy.cc/*"
+        },
+        {
+          "url": "https://github.store/*"
+        },
+        {
+          "url": "https://github.site/*"
+        },
+        {
+          "url": "https://cors.isteed.cc/*"
         }
       ]
     }

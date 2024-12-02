@@ -2,19 +2,25 @@
 import { BaseButton } from '@/components/Button'
 import { CodeEditor } from '@/components/CodeEditor'
 import { ContentWrap } from '@/components/ContentWrap'
-import { Dialog } from '@/components/Dialog'
-import { useI18n } from '@/hooks/web/useI18n'
-import { ElMessageBox, ElNotification, ElOption, ElSelect, ElTree } from 'element-plus'
-import { computed, onBeforeMount, onMounted, reactive, ref, unref, watch } from 'vue'
 import { Descriptions, DescriptionsSchema } from '@/components/Descriptions'
+import { Dialog } from '@/components/Dialog'
 import { LOG_PATH } from '@/constants/easytier'
+import { useI18n } from '@/hooks/web/useI18n'
 import { useEasyTierStore } from '@/store/modules/easytier'
 import { useTrayStore } from '@/store/modules/trayStore'
 import { parseNodeInfo, parsePeerInfo } from '@/utils/easyTierUtil'
 import { listTomlFiles, readFileContent } from '@/utils/fileUtil'
-import { killProcess, runEasyTierCli, runEasyTierCore } from '@/utils/shellUtil'
+import {
+  getRunningProcesses,
+  killProcess,
+  runEasyTierCli,
+  runEasyTierCore
+} from '@/utils/shellUtil'
 import { notify, sleep } from '@/utils/sysUtil'
+import { attachConsole, error, info } from '@tauri-apps/plugin-log'
 import dayjs from 'dayjs'
+import { ElMessageBox, ElNotification, ElOption, ElSelect, ElTree } from 'element-plus'
+import { computed, onMounted, reactive, ref, unref, watch } from 'vue'
 
 const { t } = useI18n()
 const easyTierStore = useEasyTierStore()
@@ -41,17 +47,6 @@ const tableRowClassName = ({ rowIndex }: { row: any; rowIndex: number }) => {
   }
   return ''
 }
-// 暂时无法判断配置是哪个节点网络
-// const allConfigOptions = reactive([
-//   {
-//     label: '运行中',
-//     options: [{ label: '', value: '' }]
-//   },
-//   {
-//     label: '未运行',
-//     options: [{ label: '', value: '' }]
-//   }
-// ])
 
 const nodeInfoSchema = reactive<DescriptionsSchema[]>([
   {
@@ -111,12 +106,8 @@ const getConfigList = async () => {
       tmpList.push({ configFileName: configName, fileName: f })
     }
     easyTierStore.setConfigList(tmpList)
-    // todo 使用上次的配置
-    if (tmpList && tmpList[0]) {
-      currentNodeKey.value = tmpList[0]
-    }
   } catch (e) {
-    console.error('获取配置异常' + e)
+    error('获取配置异常' + e)
   }
 }
 // 从easyTierStore.runningList 同步 runningTag
@@ -202,16 +193,8 @@ const getPeerInfo = async () => {
     }
     const res = await runEasyTierCli(['peer'])
     if (res === 403) {
-      ElMessageBox.alert(
-        'easytier-core 或 easytier-cli 不存在或无可执行权限，请到设置页下载安装，或授予可执行权限<br><b>使用：</b><br>1.先到设置检测内核是否存在；<br>2.配置页新建组网配置；<br>3.工作台运行配置<br>组网成功后可退出管理器',
-        t('common.reminder'),
-        {
-          confirmButtonText: t('common.ok'),
-          type: 'warning',
-          dangerouslyUseHTMLString: true
-        }
-      )
       easyTierStore.setStopLoop(true)
+      easyTierStore.removeRunningList(currentNodeKey.value.configFileName)
       continue
     }
     if (!res) {
@@ -221,7 +204,6 @@ const getPeerInfo = async () => {
       retryTime = 0
     }
     peerInfo.value = parsePeerInfo(res)
-    console.log('peerInfo.value', peerInfo.value)
     const filter = peerInfo.value.filter((value) => value.ipv4 && value.cost !== 'Local')
     const filter1 = peerInfo.value.filter(
       (value) => value.ipv4 && value.cost !== 'Local' && value.cost === 'p2p'
@@ -247,16 +229,28 @@ const getPeerInfo = async () => {
     await sleep(7000)
   }
 }
-
+const updateRunningList = async (res?: any) => {
+  if (!res) {
+    res = await getRunningProcesses(currentNodeKey.value.fileName!)
+  }
+  if (res.length > 0) {
+    res.forEach((item) => {
+      // 先删除，再添加
+      const configFileName = item.fileName.replace('.toml', '')
+      easyTierStore.removeRunningList(configFileName)
+      easyTierStore.addRunningList(configFileName, item.pid)
+    })
+  }
+  return res
+}
 const startAction = async () => {
-  console.log('开始运行配置:', currentNodeKey.value.configFileName)
+  info('开始运行配置:' + currentNodeKey.value.configFileName)
   await runEasyTierCore(currentNodeKey.value.fileName!)
     .then((res) => {
-      console.log('运行配置结果:', res)
-      easyTierStore.addRunningList(currentNodeKey.value.configFileName, res)
-      console.log('运行配置:', easyTierStore.runningList)
+      info('运行配置结果:' + res)
       getNodeInfo()
       getPeerInfo()
+      updateRunningList()
       easyTierStore.setStopLoop(false)
       easyTierStore.setP2pNotify(true)
       easyTierStore.setLastRunConfigName(currentNodeKey.value)
@@ -276,15 +270,14 @@ const startAction = async () => {
     .finally(() => currentNodeKeyChange())
 }
 const stopAction = async () => {
-  console.log('停止运行配置:', currentNodeKey.value.configFileName)
+  info('停止运行配置:' + currentNodeKey.value.configFileName)
   // easyTierStore.setErrRunNotify(false)
   const pid = easyTierStore.getRunningItem(currentNodeKey.value.configFileName)?.pid
   if (pid) {
     const res = await killProcess(pid)
-    console.log('停止运行配置结果:', res)
+    info('停止运行配置结果:' + res)
     if (res) {
       await reset()
-      easyTierStore.removeRunningList(currentNodeKey.value.configFileName)
       ElNotification({
         title: t('common.reminder'),
         message: t('common.accessSuccess'),
@@ -302,12 +295,16 @@ const stopAction = async () => {
   }
   trayStore.setTrayTooltip(undefined)
   easyTierStore.setStopLoop(true)
+  easyTierStore.removeRunningList(currentNodeKey.value.configFileName)
+  await updateRunningList()
   // currentNodeKeyChange()
 }
 const reset = async () => {
   nodeInfo.value = {}
   peerInfo.value.length = 0
   descriptionCollapse.value = false
+  easyTierStore.removeRunningList(currentNodeKey.value.configFileName)
+  await updateRunningList()
   // runningTag.value = false
   // await getList()
 }
@@ -323,89 +320,59 @@ const viewLogAction = async () => {
   }
   logDialogVisible.value = true
 }
-// const refreshAction = async () => {
-//   // const p = await isRunProcess()
-//   // if (p && p.commandLine) {
-//   //   runningTag.value = true
-//   //   easyTierStore.setStopLoop(false)
-//   //   getNodeInfo()
-//   //   getPeerInfo()
-//   //   await getList()
-//   // } else {
-//   //   runningTag.value = false
-//   // }
-//   // ElMessage.info('已刷新')
-// }
-// // 是则返回进程信息，不是则 undefined
-// const isRunProcess = async () => {
-//   // const processes = await getRunningProcesses('easytier-core')
-//   // try {
-//   //   if (processes && processes.length > 0) {
-//   //     const p = processes.find((value: any) => value.commandLine?.includes(currentNodeKey.value))
-//   //     if (p && p.commandLine) {
-//   //       return p
-//   //     }
-//   //   }
-//   // } catch (e) {
-//   //   log.error('错误' + e)
-//   // }
-//   // return undefined
-// }
 const currentNodeKeyChange = async () => {
-  console.log('currentNodeKeyChange:', currentNodeKey.value)
-
-  // easyTierStore.setErrRunNotify(true)
-  // const p = await isRunProcess()
-  // if (p && p.commandLine) {
-  //   runningTag.value = true
-  //   easyTierStore.setStopLoop(false)
-  //   getNodeInfo()
-  //   getPeerInfo()
-  //   // await getList()
-  //   return
-  // }
-  // nodeInfo.value = {}
-  // peerInfo.value.length = 0
-  // descriptionCollapse.value = false
-  // runningTag.value = false
-  // easyTierStore.setStopLoop(true)
-  // await getList()
+  try {
+    easyTierStore.setErrRunNotify(true)
+    // const res = await getRunningProcesses(currentNodeKey.value.fileName!)
+    const res = await updateRunningList()
+    if (res.length > 0) {
+      // await updateRunningList(res)
+      easyTierStore.setStopLoop(false)
+      getNodeInfo()
+      getPeerInfo()
+      return
+    }
+    nodeInfo.value = {}
+    peerInfo.value.length = 0
+    descriptionCollapse.value = false
+    easyTierStore.setStopLoop(true)
+    await getConfigList()
+  } catch (e: any) {
+    error('异常:' + e.message)
+  }
 }
 
 const wordWrapChange = (val: any) => {
   MonacoEditRef.value.updateOptions({ wordWrap: val })
 }
-onBeforeMount(async () => {
-  await getConfigList()
-  currentNodeKey.value = easyTierStore.getLastRunConfigName()
-})
+const checkCore = async () => {
+  const res = await runEasyTierCli(['-V'])
+  if (!res) {
+    ElMessageBox.alert(
+      'easytier-core 或 easytier-cli 不存在或无可执行权限，请到设置页下载安装，或授予可执行权限<br><b>使用：</b><br>1.先到设置检测内核是否存在；<br>2.配置页新建组网配置；<br>3.工作台运行配置<br>组网成功后可退出管理器',
+      t('common.reminder'),
+      {
+        confirmButtonText: t('common.ok'),
+        type: 'warning',
+        dangerouslyUseHTMLString: true
+      }
+    )
+  }
+}
 onMounted(async () => {
+  // 启用 TargetKind::Webview 后，这个函数将把日志打印到浏览器控制台
+  await attachConsole()
+  await checkCore()
   easyTierStore.loadRunningList()
-  easyTierStore.runningList.forEach((item) => {
-    console.log('item', item)
-  })
-
-  getNodeInfo()
-  getPeerInfo()
-  // currentNodeKeyChange()
-
-  // ipcRenderer.on('runChildEasyTierExit', () => {
-  //   if (easyTierStore.errRunNotify) {
-  //     ElNotification({
-  //       title: t('common.reminder'),
-  //       message: '启动异常，请检查配置文件是否正确，或是否重复启动',
-  //       type: 'error',
-  //       duration: 8000
-  //     })
-  //   }
-  // })
-  // ipcRenderer.on('update-message', (_event, arg) => {
-  //   ElNotification({
-  //     title: t('common.reminder'),
-  //     message: arg,
-  //     type: 'info'
-  //   })
-  // })
+  await getConfigList()
+  const configName = easyTierStore.getLastRunConfigName()
+  if (configName) {
+    currentNodeKey.value.configFileName = configName
+    currentNodeKey.value.fileName = configName + '.toml'
+    currentNodeKeyChange()
+  }
+  // getNodeInfo()
+  // getPeerInfo()
 })
 </script>
 

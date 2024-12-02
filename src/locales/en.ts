@@ -672,6 +672,9 @@ export default {
     symmetric: 'Symmetric',
     restricted: 'Restricted',
     fullCone: 'Full Cone',
-    unknown: 'Unknown'
+    unknown: 'Unknown',
+    openDirError: 'Open directory failed',
+    extractError: 'Extract failed',
+    extractSuccess: 'Extract success'
   }
 }
