@@ -13,8 +13,17 @@ import {
   readFileContent,
   writeFileContent
 } from '@/utils/fileUtil'
-import { getHostname } from '@/utils/sysUtil'
-import { attachConsole, error } from '@tauri-apps/plugin-log'
+import {
+  checkServiceOnWindows,
+  installServiceOnWindows,
+  runEasyTierCli,
+  startServiceOnWindows,
+  stopServiceOnWindows,
+  uninstallServiceOnWindows
+} from '@/utils/shellUtil'
+import { getHostname, getOsType } from '@/utils/sysUtil'
+import { join, resourceDir } from '@tauri-apps/api/path'
+import { attachConsole, error, info } from '@tauri-apps/plugin-log'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { cloneDeep } from 'lodash-es'
 import * as toml from 'smol-toml'
@@ -38,32 +47,38 @@ const formData = ref<FormData>(cloneDeep(DefaultData.defaultFormData))
 const configFileName = ref<string | null>(null)
 const errorMessage = ref('')
 const logsDir = ref('')
+const prefixSvc = 'easytier-'
 const getConfigList = async () => {
   const fileList = await listTomlFiles()
   const tmpList: any = []
   for (const f of fileList) {
     const configName = f.replace('.toml', '')
-    tmpList.push({ configFileName: configName, fileName: f })
+    const status = await checkServiceOnWindows(prefixSvc + configName)
+    tmpList.push({
+      configFileName: configName,
+      fileName: f,
+      serviceStatus: serviceStatusDict(status)
+    })
   }
   easyTierStore.setConfigList(tmpList)
 
   return tmpList
 }
-// const serviceStatusDict = (status: string) => {
-//   if (!status) {
-//     return '未安装'
-//   }
-//   switch (status) {
-//     case 'SERVICE_STOPPED':
-//       return '停止'
-//     case 'SERVICE_RUNNING':
-//       return '运行中'
-//     case 'uninstalled':
-//       return '未安装'
-//     default:
-//       return '停止'
-//   }
-// }
+const serviceStatusDict = (status: string | boolean) => {
+  if (!status) {
+    return '未安装'
+  }
+  switch (status) {
+    case 'SERVICE_STOPPED':
+      return '停止'
+    case 'SERVICE_RUNNING':
+      return '运行中'
+    case 'uninstalled':
+      return '未安装'
+    default:
+      return '未知'
+  }
+}
 const readFileData = async (fileName: string) => {
   dataConfig.value = (await readFileContent(CONFIG_PATH + '/' + fileName)) as string
 }
@@ -164,7 +179,7 @@ const addConfigAction = async () => {
         duration: 2000
       })
     } catch (e: any) {
-      error('表单新增报错：' + e.message)
+      error('表单新增报错：' + JSON.stringify(e))
       ElNotification({
         title: t('common.reminder'),
         message: '表单新增报错',
@@ -198,10 +213,10 @@ const addConfigAction = async () => {
         duration: 2000
       })
     } catch (e: any) {
-      error('Error writing file:' + e.message)
+      error('Error writing file:' + JSON.stringify(e))
       ElNotification({
         title: t('common.reminder'),
-        message: error.message,
+        message: JSON.stringify(e),
         type: 'error',
         duration: 5000
       })
@@ -254,7 +269,7 @@ const saveConfigAction = async () => {
           duration: 2000
         })
       } catch (e: any) {
-        error('表单保存报错：' + e.message)
+        error('表单保存报错：' + JSON.stringify(e))
         ElNotification({
           title: t('common.reminder'),
           message: '表单保存报错',
@@ -290,10 +305,10 @@ const saveConfigAction = async () => {
         duration: 2000
       })
     } catch (e: any) {
-      error('Error writing file:' + e.message)
+      error('Error writing file:' + JSON.stringify(e))
       ElNotification({
         title: t('common.reminder'),
-        message: error.message,
+        message: JSON.stringify(e),
         type: 'error',
         duration: 5000
       })
@@ -309,7 +324,7 @@ const delConfig = async (row?: any) => {
   })
     .then(async () => {
       // todo log.log('删除服务', row)
-      // await uninstallService(prefixSvc + row?.configFileName)
+      await uninstallServiceOnWindows(prefixSvc + row?.configFileName)
       await deleteFileOrDir(CONFIG_PATH + '/' + row?.fileName)
       ElNotification({
         title: t('common.reminder'),
@@ -330,118 +345,136 @@ const delConfig = async (row?: any) => {
       await getConfigList()
     })
 }
-// const installServiceHandle = async (row: any) => {
-//   ElMessageBox.confirm(t('easytier.installServiceMessage'), t('common.reminder'), {
-//     confirmButtonText: t('common.ok'),
-//     cancelButtonText: t('common.cancel'),
-//     type: 'warning'
-//   }).then(async () => {
-//     // const res = await execCli('peer')
-//     // if (res === 403) {
-//     //   ElNotification({
-//     //     title: t('common.reminder'),
-//     //     message:
-//     //       'easytier-core 或 easytier-cli 不存在或无可执行权限，请到设置页下载安装，或授予可执行权限',
-//     //     type: 'error',
-//     //     duration: 8000
-//     //   })
-//     //   return
-//     // }
-//     // const binPath = path.join(await getUserDataPath(), BIN_PATH, 'easytier-core')
-//     // const configPath = path.join(await getUserDataPath(), CONFIG_PATH, row.configFileName + '.toml')
-//     // installService(prefixSvc + row.configFileName, binPath, configPath)
-//     //   .then((res) => {
-//     //     log.info('res', res)
-//     //     if (res) {
-//     //       ElNotification({
-//     //         title: t('common.reminder'),
-//     //         message: '服务安装成功',
-//     //         type: 'success',
-//     //         duration: 3000
-//     //       })
-//     //     }
-//     //   })
-//     //   .finally(() => {
-//     //     getConfigList()
-//     //   })
-//   })
-// }
+const installServiceHandle = async (row: any) => {
+  info('安装服务:' + JSON.stringify(row))
+  ElMessageBox.confirm(t('easytier.installServiceMessage'), t('common.reminder'), {
+    confirmButtonText: t('common.ok'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning'
+  }).then(async () => {
+    const res = await runEasyTierCli(['-V'])
+    if (res === 403) {
+      ElNotification({
+        title: t('common.reminder'),
+        message:
+          'easytier-core 或 easytier-cli 不存在或无可执行权限，请到设置页下载安装，或授予可执行权限',
+        type: 'error',
+        duration: 6000
+      })
+      return
+    }
+    const configPath = await join(await resourceDir(), CONFIG_PATH, row.fileName)
+    installServiceOnWindows(prefixSvc + row.configFileName, configPath)
+      .then((res) => {
+        info('服务安装:' + JSON.stringify(res))
+        if (res) {
+          ElNotification({
+            title: t('common.reminder'),
+            message: '服务安装成功',
+            type: 'success',
+            duration: 3000
+          })
+        }
+      })
+      .catch((e) => {
+        error('服务安装失败:' + JSON.stringify(e))
+        ElNotification({
+          title: t('common.reminder'),
+          message: '服务安装失败',
+          type: 'error',
+          duration: 3000
+        })
+      })
+      .finally(() => {
+        getConfigList()
+      })
+  })
+}
 
-// const uninstallServiceHandle = async (row: any) => {
-//   ElMessageBox.confirm(t('easytier.uninstallServiceMessage'), t('common.reminder'), {
-//     confirmButtonText: t('common.ok'),
-//     cancelButtonText: t('common.cancel'),
-//     type: 'warning'
-//   })
-//     .then(async () => {
-//       // await uninstallService(prefixSvc + row.configFileName)
-//       // ElNotification({
-//       //   title: t('common.reminder'),
-//       //   message: t('common.accessSuccess'),
-//       //   type: 'success',
-//       //   duration: 2000
-//       // })
-//     })
-//     .finally(async () => await getConfigList())
-// }
-// const startServiceHandle = async (row: any) => {
-//   // startServiceOnWindows(prefixSvc + row.configFileName)
-//   //   .then((res: any) => {
-//   //     if (res) {
-//   //       ElNotification({
-//   //         title: t('common.reminder'),
-//   //         message: '服务运行成功',
-//   //         type: 'success',
-//   //         duration: 2000
-//   //       })
-//   //       return
-//   //     }
-//   //     ElNotification({
-//   //       title: t('common.reminder'),
-//   //       message: '运行失败，未安装服务/配置文件错误/内核不存在',
-//   //       type: 'error',
-//   //       duration: 8000
-//   //     })
-//   //   })
-//   //   .catch(() => {
-//   //     ElNotification({
-//   //       title: t('common.reminder'),
-//   //       message: '运行失败，未安装服务/配置文件错误/内核不存在',
-//   //       type: 'error',
-//   //       duration: 8000
-//   //     })
-//   //   })
-//   //   .finally(async () => await getConfigList())
-// }
-// const stopServiceHandle = async (row: any) => {
-//   // stopServiceOnWindows(prefixSvc + row.configFileName)
-//   //   .then((res: any) => {
-//   //     if (res) {
-//   //       ElNotification({
-//   //         title: t('common.reminder'),
-//   //         message: '服务停止成功',
-//   //         type: 'success',
-//   //         duration: 2000
-//   //       })
-//   //       return
-//   //     }
-//   //     ElNotification({
-//   //       title: t('common.reminder'),
-//   //       message: '服务停止失败',
-//   //       type: 'error',
-//   //       duration: 3000
-//   //     })
-//   //   })
-//   //   .catch((e) => {
-//   //     ElNotification({
-//   //       title: t('common.reminder'),
-//   //       message: '服务停止失败 ' + e.message,
-//   //       type: 'error',
-//   //       duration: 8000
-//   //     })
-//   //   })
-//   //   .finally(async () => await getConfigList())
-// }
+const uninstallServiceHandle = async (row: any) => {
+  ElMessageBox.confirm(t('easytier.uninstallServiceMessage'), t('common.reminder'), {
+    confirmButtonText: t('common.ok'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning'
+  })
+    .then(async () => {
+      const res = await uninstallServiceOnWindows(prefixSvc + row.configFileName)
+      if (res) {
+        ElNotification({
+          title: t('common.reminder'),
+          message: t('common.accessSuccess'),
+          type: 'success',
+          duration: 2000
+        })
+      } else {
+        ElNotification({
+          title: t('common.reminder'),
+          message: '服务删除失败',
+          type: 'error',
+          duration: 2000
+        })
+      }
+    })
+    .finally(async () => await getConfigList())
+}
+const startServiceHandle = async (row: any) => {
+  startServiceOnWindows(prefixSvc + row.configFileName)
+    .then((res: any) => {
+      if (res) {
+        ElNotification({
+          title: t('common.reminder'),
+          message: '服务运行成功',
+          type: 'success',
+          duration: 2000
+        })
+        return
+      }
+      ElNotification({
+        title: t('common.reminder'),
+        message: '运行失败，未安装服务/配置文件错误/内核不存在',
+        type: 'error',
+        duration: 8000
+      })
+    })
+    .catch(() => {
+      ElNotification({
+        title: t('common.reminder'),
+        message: '运行失败，未安装服务/配置文件错误/内核不存在',
+        type: 'error',
+        duration: 8000
+      })
+    })
+    .finally(async () => await getConfigList())
+}
+const stopServiceHandle = async (row: any) => {
+  stopServiceOnWindows(prefixSvc + row.configFileName)
+    .then((res: any) => {
+      if (res) {
+        ElNotification({
+          title: t('common.reminder'),
+          message: '服务停止成功',
+          type: 'success',
+          duration: 2000
+        })
+        return
+      }
+      ElNotification({
+        title: t('common.reminder'),
+        message: '服务停止失败',
+        type: 'error',
+        duration: 3000
+      })
+    })
+    .catch((e) => {
+      ElNotification({
+        title: t('common.reminder'),
+        message: '服务停止失败 ' + JSON.stringify(e),
+        type: 'error',
+        duration: 8000
+      })
+    })
+    .finally(async () => await getConfigList())
+}
 watch(configFileName, (value) => {
   formData.value.file_logger.file = value
 })
@@ -450,6 +483,7 @@ onMounted(async () => {
   await attachConsole()
   await getConfigList()
   logsDir.value = await getLogsDir()
+  easyTierStore.setOs(await getOsType())
 })
 </script>
 
@@ -465,6 +499,9 @@ onMounted(async () => {
           >{{ t('easytier.reloadNetConfig') }}
         </BaseButton>
       </div>
+      <el-text v-if="easyTierStore.os === 'windows'" type="info" effect="dark"
+        >如果组网是由服务启动的，则只能使用启动服务和停止服务，无法使用首页的启动和停止</el-text
+      >
       <el-table
         :data="easyTierStore.configList"
         height="60vh"
@@ -489,7 +526,6 @@ onMounted(async () => {
           show-overflow-tooltip
           sortable
         />
-        <!-- 
         <el-table-column
           prop="serviceStatus"
           label="服务状态"
@@ -497,6 +533,7 @@ onMounted(async () => {
           align="center"
           show-overflow-tooltip
           sortable
+          v-if="easyTierStore.os === 'windows'"
         >
           <template #default="{ row }">
             <el-text v-if="row.serviceStatus === '运行中'" type="success" effect="dark">
@@ -508,7 +545,6 @@ onMounted(async () => {
             <el-text v-else>{{ row.serviceStatus }}</el-text>
           </template>
         </el-table-column>
-        -->
         <el-table-column label="操作" width="280" header-align="center" align="center">
           <template #default="{ row }">
             <BaseButton type="primary" size="small" @click="edit(row)">
@@ -522,9 +558,15 @@ onMounted(async () => {
             </BaseButton>
           </template>
         </el-table-column>
-        <!-- <el-table-column label="服务操作" width="240" header-align="center" align="center">
+        <el-table-column
+          label="服务操作"
+          width="240"
+          header-align="center"
+          align="center"
+          v-if="easyTierStore.os === 'windows'"
+        >
           <template #default="{ row }">
-            <el-row justify="center" class="mb-1" v-if="easyTierStore.os === 'windows'">
+            <el-row justify="center" class="mb-1">
               <BaseButton type="success" size="small" @click="startServiceHandle(row)">
                 {{ t('easytier.startService') }}
               </BaseButton>
@@ -541,7 +583,7 @@ onMounted(async () => {
               </BaseButton>
             </el-row>
           </template>
-        </el-table-column> -->
+        </el-table-column>
       </el-table>
       <div class="mt-3">
         <el-pagination
@@ -553,17 +595,6 @@ onMounted(async () => {
           :total="total"
         />
       </div>
-      <!--<Table
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :columns="allSchemas.tableColumns"
-        :data="dataList"
-        :loading="loading"
-        @register="tableRegister"
-        :pagination="{
-          total
-        }"
-      />-->
     </ContentWrap>
 
     <Dialog v-model="dialogVisible" :title="dialogTitle" maxHeight="68vh">

@@ -59,31 +59,6 @@ export const getLocale = async () => {
   return currentLocale
 }
 
-// 处理窗口关闭事件
-export const handleWindowClose = async () => {
-  const window = getCurrentWindow()
-
-  // 监听窗口关闭事件
-  await window.onCloseRequested(async (event) => {
-    // 阻止默认关闭行为
-    event.preventDefault()
-
-    // 询问用户是否最小化到托盘
-    // const shouldMinimize = await ask('是否最小化到托盘？', {
-    //   title: '关闭提示',
-    //   type: 'warning'
-    // })
-
-    await window.minimize()
-    // if (shouldMinimize) {
-    //   // 最小化窗口
-    // } else {
-    //   // 用户选择退出，调用托盘的退出方法
-    //   await trayStore.onQuit()
-    // }
-  })
-}
-
 export const sleep = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }

@@ -5,6 +5,7 @@ export const CONFIG_PATH = 'config'
 export const RESOURCE_PATH = 'resource'
 export const LOG_PATH = 'logs'
 export const BIN_PATH = 'bin'
+export const NSSM_NAME = 'nssm'
 /**
  * 配置文件名
  */

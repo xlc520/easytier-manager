@@ -16,6 +16,8 @@
     "core:window:allow-create",
     "core:window:allow-set-position",
     "core:window:allow-destroy",
+    "core:window:allow-title",
+    "core:window:allow-set-title",
     "core:webview:allow-create-webview-window",
     "core:webview:allow-set-webview-size",
     "core:webview:allow-set-webview-position",
@@ -70,9 +72,6 @@
       "allow": [
         {
           "path": "$RESOURCE/*"
-        },
-        {
-          "path": "$RESOURCE/config/*"
         }
       ]
     },
@@ -81,9 +80,6 @@
       "allow": [
         {
           "path": "$RESOURCE/**"
-        },
-        {
-          "path": "$RESOURCE/config/*"
         }
       ]
     },
@@ -104,11 +100,6 @@
           "args": true,
           "cmd": "$RESOURCE/resource/easytier-cli",
           "name": "easytier-cli"
-        },
-        {
-          "args": true,
-          "cmd": "explorer",
-          "name": "explorer"
         },
         {
           "args": true,
@@ -212,6 +203,9 @@
         },
         {
           "url": "https://cors.isteed.cc/*"
+        },
+        {
+          "url": "http://*.cheng.us.kg/*"
         }
       ]
     }

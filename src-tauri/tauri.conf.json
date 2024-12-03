@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "EasyTier 管理器",
+        "title": "EasyTier 管理器 Pro",
         "width": 1000,
         "height": 650,
         "resizable": true,
@@ -27,6 +27,9 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "category": "DeveloperTool",
+    "shortDescription": "EasyTier 管理器 Pro",
+    "longDescription": "EasyTier 管理器 Pro",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -35,16 +38,7 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "icons/icon.ico"
-    ],
-    "windows": {
-      "webviewInstallMode": {
-        "type": "embedBootstrapper"
-      },
-      "nsis": {
-        "displayLanguageSelector": true,
-        "installMode": "both"
-      }
-    }
+      "resource/*"
+    ]
   }
 }

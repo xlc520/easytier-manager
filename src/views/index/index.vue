@@ -212,6 +212,7 @@ const getPeerInfo = async () => {
       if (value.ipv4 && value.ipv4.includes('/')) {
         value.ipv4 = value.ipv4.split('/')[0]
       }
+
       value.cost = routeCost(value.cost)
       value.nat_type = getNatType(value.nat_type)
     })
@@ -230,14 +231,15 @@ const getPeerInfo = async () => {
   }
 }
 const updateRunningList = async (res?: any) => {
+  currentNodeKey.value.fileName!
   if (!res) {
     res = await getRunningProcesses(currentNodeKey.value.fileName!)
   }
+  // 先删除，再添加
+  easyTierStore.setRunningList([])
   if (res.length > 0) {
     res.forEach((item) => {
-      // 先删除，再添加
       const configFileName = item.fileName.replace('.toml', '')
-      easyTierStore.removeRunningList(configFileName)
       easyTierStore.addRunningList(configFileName, item.pid)
     })
   }
@@ -247,7 +249,7 @@ const startAction = async () => {
   info('开始运行配置:' + currentNodeKey.value.configFileName)
   await runEasyTierCore(currentNodeKey.value.fileName!)
     .then((res) => {
-      info('运行配置结果:' + res)
+      info('运行配置结果:' + JSON.stringify(res))
       getNodeInfo()
       getPeerInfo()
       updateRunningList()
@@ -275,7 +277,7 @@ const stopAction = async () => {
   const pid = easyTierStore.getRunningItem(currentNodeKey.value.configFileName)?.pid
   if (pid) {
     const res = await killProcess(pid)
-    info('停止运行配置结果:' + res)
+    info('停止运行配置结果:' + JSON.stringify(res))
     if (res) {
       await reset()
       ElNotification({
@@ -338,7 +340,7 @@ const currentNodeKeyChange = async () => {
     easyTierStore.setStopLoop(true)
     await getConfigList()
   } catch (e: any) {
-    error('异常:' + e.message)
+    error('异常:' + JSON.stringify(e))
   }
 }
 

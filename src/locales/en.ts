@@ -651,6 +651,7 @@ export default {
     logPath: 'Log Path',
     appLogLevel: 'App Log Level',
     openLogPath: 'Open Log Path',
+    openAppLogPath: 'Open App Log Path',
     openCorePath: 'Open Core Path',
     copyLogPath: 'Copy Log Path',
     installService: 'Install Service',
@@ -675,6 +676,11 @@ export default {
     unknown: 'Unknown',
     openDirError: 'Open directory failed',
     extractError: 'Extract failed',
-    extractSuccess: 'Extract success'
+    extractSuccess: 'Extract success',
+    windowState: 'Window state',
+    restoreWinState: 'Restore window state',
+    otherSetting: 'Other setting',
+    clearCache: 'Clear cache',
+    feedback: 'Feedback'
   }
 }

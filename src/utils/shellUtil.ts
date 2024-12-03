@@ -1,9 +1,9 @@
-import { CONFIG_PATH } from '@/constants/easytier'
+import { CONFIG_PATH, NSSM_NAME } from '@/constants/easytier'
 import { join, resourceDir } from '@tauri-apps/api/path'
-import { attachConsole, error, info } from '@tauri-apps/plugin-log'
+import { attachConsole, debug, error, info } from '@tauri-apps/plugin-log'
 import { Command, type SpawnOptions } from '@tauri-apps/plugin-shell'
 import { getResourceDir } from './fileUtil'
-import { getPlatform } from './sysUtil'
+import { getPlatform, sleep } from './sysUtil'
 // 启用 TargetKind::Webview 后，这个函数将把日志打印到浏览器控制台
 attachConsole()
 /**
@@ -24,8 +24,9 @@ export async function executeCmd(
   program: string,
   args: string[] = [],
   options: SpawnOptions = {}
-): Promise<string> {
+): Promise<any> {
   try {
+    // debug('执行命令:' + program + ' ' + args.join(' '))
     // 创建命令实例
     const command = Command.create(program, args, {
       cwd: options.cwd,
@@ -34,13 +35,14 @@ export async function executeCmd(
     })
     // 执行并等待完成
     const output = await command.execute()
-    if (output.stderr) {
-      throw output.stderr
+    // debug('执行命令输出:' + JSON.stringify(output))
+    if (output.code !== 0 && output.code !== 1) {
+      throw output.stderr.trim() || output.stdout.trim() || output
     }
-    return output.stdout
+    return output.stdout.trim() || output
   } catch (e: any) {
-    error('执行程序失败:' + e.message)
-    throw error
+    error('执行程序失败:' + JSON.stringify(e))
+    throw e
   }
 }
 
@@ -116,16 +118,15 @@ export async function executeBack(
     info(`[${program}] 后台进程已启动, PID: ${child.pid}`)
     return child.pid
   } catch (e: any) {
-    error('启动后台程序失败:' + e.message)
+    error('启动后台程序失败:' + JSON.stringify(e))
     throw error
   }
 }
 
 // 运行 easytier-core 配置
 export async function runEasyTierCore(configFileName: string) {
-  const corePath = await join(await resourceDir(), CONFIG_PATH)
-  const corePathFileName = corePath + '/' + configFileName
-  return await executeBack('easytier-core', ['-c', corePathFileName])
+  const corePath = await join(await resourceDir(), CONFIG_PATH, configFileName)
+  return await executeBack('easytier-core', ['-c', corePath])
 }
 
 // 运行 easytier-cli 配置
@@ -168,7 +169,7 @@ export async function killProcess(pid: number, force: boolean = true): Promise<b
     info(`进程 ${pid} 已${force ? '强制' : ''}终止`)
     return true
   } catch (e: any) {
-    error(`终止进程 ${pid} 失败:` + e.message)
+    error(`终止进程 ${pid} 失败:` + JSON.stringify(e))
     return false
   }
 }
@@ -180,7 +181,7 @@ export async function killProcessWithSudo(pid: number, force: boolean = false): 
     await executeCmd('sudo', ['kill', signal, pid.toString()])
     return true
   } catch (e: any) {
-    error(`使用 sudo 终止进程 ${pid} 失败:` + e.message)
+    error(`使用 sudo 终止进程 ${pid} 失败:` + JSON.stringify(e))
     return false
   }
 }
@@ -274,5 +275,163 @@ export const getRunningProcesses = async (
       .catch((error) => {
         reject(error)
       })
+  })
+}
+/**
+ * 检测服务是否存在
+ * @param serviceName 服务名
+ * @returns Promise<boolean> 是否存在
+ */
+export const checkServiceOnWindows = (serviceName: string): Promise<any> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const args = ['status', serviceName]
+      const res: any = await executeCmd(NSSM_NAME, args, { encoding: 'gbk' })
+      // debug('检测服务:' + res)
+      if (res && res.code! === 0) {
+        resolve(false)
+      }
+      resolve(res)
+    } catch (e: any) {
+      error('检测服务出错:' + JSON.stringify(e))
+      resolve(false)
+    }
+  })
+}
+/*
+# 无需确认移除服务：
+nssm remove <servicename> confirm
+# 管理服务：
+nssm start <servicename>     # 启动服务
+nssm stop <servicename>      # 停止服务
+nssm restart <servicename>   # 重启服务
+nssm status <servicename>    # 显示服务状态
+nssm statuscode <servicename>   # 显示服务状态码
+nssm rotate <servicename>    # 旋转服务日志
+nssm processes <servicename> # 显示服务关联的进程
+ */
+/**
+ * Windows 安装指定程序为系统服务
+ * @param serviceName 服务名
+ * @param args 程序参数
+ * @returns Promise<boolean> 是否成功
+ */
+export const installServiceOnWindows = async (serviceName: string, args: string) => {
+  return new Promise(async (resolve, reject) => {
+    const appDirectory = await getResourceDir()
+    const corePath = await join(appDirectory, 'easytier-core')
+    try {
+      // 服务是否存在
+      const exist: any = await checkServiceOnWindows(serviceName)
+      info('服务是否存在:' + JSON.stringify(exist))
+      if (exist) {
+        resolve(true)
+        return
+      }
+      const args1 = ['install', serviceName, corePath]
+      const args2 = ['set', serviceName, 'AppParameters', `-c ${args}`]
+      const args3 = ['set', serviceName, 'AppDirectory', appDirectory]
+      const args4 = ['set', serviceName, 'AppExit', 'Default', 'Restart']
+      const args5 = ['set', serviceName, 'Description', `EasyTier 组网,服务配置:${serviceName}`]
+      const args6 = ['set', serviceName, 'DisplayName', `EasyTier 组网 ${serviceName}`]
+      const args7 = ['set', serviceName, 'ObjectName', 'LocalSystem']
+      const args8 = ['set', serviceName, 'Start', 'SERVICE_AUTO_START']
+      const args9 = ['set', serviceName, 'Type', 'SERVICE_WIN32_OWN_PROCESS']
+      await executeCmd(NSSM_NAME, args1, { encoding: 'gbk' }).then(async (res) => {
+        info('安装服务结果:' + JSON.stringify(res))
+        if (
+          res &&
+          (res.code! === 0 ||
+            res.code! === 1 ||
+            res.includes('success') ||
+            res.includes('installed'))
+        ) {
+          await executeCmd(NSSM_NAME, args2, { encoding: 'gbk' })
+          await executeCmd(NSSM_NAME, args3, { encoding: 'gbk' })
+          await executeCmd(NSSM_NAME, args4, { encoding: 'gbk' })
+          await executeCmd(NSSM_NAME, args5, { encoding: 'gbk' })
+          await executeCmd(NSSM_NAME, args6, { encoding: 'gbk' })
+          await executeCmd(NSSM_NAME, args7, { encoding: 'gbk' })
+          await executeCmd(NSSM_NAME, args8, { encoding: 'gbk' })
+          await executeCmd(NSSM_NAME, args9, { encoding: 'gbk' })
+          resolve(true)
+          return
+        }
+        resolve(false)
+      })
+    } catch (e: any) {
+      error('安装服务失败:' + JSON.stringify(e))
+      resolve(false)
+    }
+  })
+}
+/**
+ * Windows 删除服务
+ * @param serviceName 服务名
+ * @returns Promise<boolean> 是否成功
+ */
+export const uninstallServiceOnWindows = (serviceName: string) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const args = ['remove', serviceName, 'confirm']
+      const res: any = await executeCmd(NSSM_NAME, args, { encoding: 'gbk' })
+      info('删除服务:' + JSON.stringify(res))
+      if (res && (res.code! === 0 || res.includes('success'))) {
+        resolve(true)
+      } else {
+        resolve(false)
+      }
+    } catch (e: any) {
+      error('删除服务出错:' + JSON.stringify(e))
+      resolve(false)
+    }
+  })
+}
+/**
+ * Windows 启动服务
+ * @param serviceName 服务名
+ * @returns Promise<boolean> 是否成功
+ */
+export const startServiceOnWindows = (serviceName: string) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const args = ['start', serviceName]
+      await executeCmd(NSSM_NAME, args, { encoding: 'gbk' })
+      await sleep(1500)
+      const res = await checkServiceOnWindows(serviceName)
+      info('启动服务:' + JSON.stringify(res))
+      if (res && (res.code! === 0 || res.includes('SERVICE'))) {
+        resolve(true)
+      } else {
+        resolve(false)
+      }
+    } catch (e: any) {
+      error('启动服务出错:' + JSON.stringify(e))
+      resolve(false)
+    }
+  })
+}
+/**
+ * Windows 停止服务
+ * @param serviceName 服务名
+ * @returns Promise<boolean> 是否成功
+ */
+export const stopServiceOnWindows = (serviceName: string) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const args = ['stop', serviceName]
+      await executeCmd(NSSM_NAME, args, { encoding: 'gbk' })
+      await sleep(1500)
+      const res = await checkServiceOnWindows(serviceName)
+      info('停止服务:' + JSON.stringify(res))
+      if (res && (res.code! === 0 || res.includes('SERVICE'))) {
+        resolve(true)
+      } else {
+        resolve(false)
+      }
+    } catch (e: any) {
+      error('停止服务出错:' + JSON.stringify(e))
+      resolve(false)
+    }
   })
 }

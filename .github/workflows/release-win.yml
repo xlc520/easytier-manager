@@ -1,4 +1,4 @@
-name: Release
+name: Release Windows
 
 on:
   workflow_dispatch:
@@ -8,13 +8,9 @@ jobs:
     if: contains('["xlc520"]', github.actor)
     permissions:
       contents: write
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ windows-latest, ubuntu-latest ]
-    #        os: [ windows-latest, ubuntu-latest, macos-latest ]
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -34,16 +30,7 @@ jobs:
         run: pnpm run build:compile
 
       - name: Build for Windows
-        if: matrix.os == 'windows-latest'
         run: pnpm run build:win
-
-      - name: Build for Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: pnpm run build:linux
-
-      #      - name: Build for MacOS
-      #        if: matrix.os == 'macos-latest'
-      #        run: pnpm run build:mac
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -52,8 +39,6 @@ jobs:
           path: release
 
       - name: Upload to GitHub Releases
-        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
-        #        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest' || (matrix.os == 'macos-latest' && env.MACOS_CERTIFICATE)
         uses: softprops/action-gh-release@v1
         with:
           draft: true
@@ -61,9 +46,5 @@ jobs:
           files: |
             release/*.exe
             release/*.zip
-            release/*.deb
-            release/*.AppImage
-            release/*.tar.gz
-            release/*.rpm
-            release/latest*.yml
             release/*.blockmap
+            release/latest*.yml

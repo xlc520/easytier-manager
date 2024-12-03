@@ -90,8 +90,8 @@
                 <el-option
                   v-for="(item, index) in peersOptions"
                   :key="index"
-                  :label="item.label"
-                  :value="item.value"
+                  :label="item.name"
+                  :value="item.description"
                 />
               </el-select>
             </el-form-item>
@@ -349,6 +349,8 @@ import { onMounted, PropType, reactive, ref, toRefs, watch } from 'vue'
 import { useI18n } from '@/hooks/web/useI18n'
 import { getLogsDir } from '@/utils/fileUtil'
 import { getHostname } from '@/utils/sysUtil'
+import { fetch } from '@tauri-apps/plugin-http'
+import { info } from '@tauri-apps/plugin-log'
 
 const { t } = useI18n()
 const props = defineProps({
@@ -404,26 +406,26 @@ const rules = reactive({
   //   }
   // ]
 })
-const peersOptions = reactive([
+const peersOptions = ref([
   {
-    label: 'tcp://public.easytier.top:11010',
-    value: 'tcp://public.easytier.top:11010'
+    name: 'tcp://public.easytier.top:11010',
+    description: 'tcp://public.easytier.top:11010'
   },
   {
-    label: 'tcp://c.oee.icu:60006',
-    value: 'tcp://c.oee.icu:60006'
+    name: 'tcp://c.oee.icu:60006',
+    description: 'tcp://c.oee.icu:60006'
   },
   {
-    label: 'tcp://ah.nkbpal.cn:11010',
-    value: 'tcp://ah.nkbpal.cn:11010'
+    name: 'tcp://ah.nkbpal.cn:11010',
+    description: 'tcp://ah.nkbpal.cn:11010'
   },
   {
-    label: 'tcp://s1.ct8.pl:11010',
-    value: 'tcp://s1.ct8.pl:11010'
+    name: 'tcp://s1.ct8.pl:11010',
+    description: 'tcp://s1.ct8.pl:11010'
   },
   {
-    label: 'tcp://et.ie12vps.xyz:11010',
-    value: 'tcp://et.ie12vps.xyz:11010'
+    name: 'tcp://et.ie12vps.xyz:11010',
+    description: 'tcp://et.ie12vps.xyz:11010'
   }
 ])
 const listenersOptions = reactive([
@@ -504,6 +506,13 @@ const flags_default_protocolOptions = reactive([
     value: 'udp'
   }
 ])
+const getPublicPeers = async () => {
+  const res = await fetch('http://easytier.api.cheng.us.kg/getMonitorList')
+  const data = await res.json()
+  if (data && data.code === 0) {
+    peersOptions.value = data.data.list
+  }
+}
 watch(
   () => formData.value.hostname,
   (value) => {
@@ -542,6 +551,7 @@ onMounted(async () => {
     formData.value.hostname = await getHostname()
   }
   formData.value.file_logger.dir = await getLogsDir()
+  await getPublicPeers()
 })
 const peerChange = (value: any) => {
   formData.value.peer = []

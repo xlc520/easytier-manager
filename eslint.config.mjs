@@ -52,7 +52,6 @@ export default tseslint.config({
     '@typescript-eslint/no-unused-vars': 0,
     'no-unused-vars': 0,
     'space-before-function-paren': 0,
-
     'vue/attributes-order': 0,
     'vue/one-component-per-file': 0,
     'vue/html-closing-bracket-newline': 0,
@@ -76,6 +75,7 @@ export default tseslint.config({
     ],
     'vue/multi-word-component-names': 0,
     'vue/no-v-html': 0,
-    'vue/require-toggle-inside-transition': 0
+    'vue/require-toggle-inside-transition': 0,
+    'no-async-promise-executor': 0
   }
 })

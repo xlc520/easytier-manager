@@ -11,16 +11,18 @@ import {
   VERSION_PREFIX
 } from '@/constants/easytier'
 import { useI18n } from '@/hooks/web/useI18n'
+import { useStorage } from '@/hooks/web/useStorage'
 import { downloadFile, extractFile, openPath } from '@/utils/fileUtil'
 import { runEasyTierCli } from '@/utils/shellUtil'
 import { getAppVersion, getArch, getOsType } from '@/utils/sysUtil'
-import { appLogDir, join, resourceDir } from '@tauri-apps/api/path'
+import { appDataDir, appLogDir, join, resourceDir } from '@tauri-apps/api/path'
 import { useClipboard } from '@vueuse/core'
 import { ElInput, ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import { template } from 'lodash-es'
 import { onMounted, reactive, ref, unref } from 'vue'
 
 const { t } = useI18n()
+const { clear: storageClear } = useStorage('localStorage')
 const fileName = ref('')
 const checkCorePathSuccess = ref(false)
 const form = reactive({
@@ -177,6 +179,28 @@ const openLogPath2 = async () => {
   const resourcePath = await join(await appLogDir())
   await openPath(resourcePath)
 }
+const restoreWinState = async () => {
+  ElMessageBox.confirm(
+    '要恢复窗口状态，需要退出软件后删除目录下的 .windowState.json 文件，重新启动软件',
+    t('common.delWarning'),
+    {
+      confirmButtonText: '打开目录',
+      cancelButtonText: t('common.delCancel'),
+      type: 'warning'
+    }
+  ).then(async () => {
+    await openPath(await appDataDir())
+  })
+}
+const clearCache = async () => {
+  storageClear()
+  ElNotification({
+    title: t('common.reminder'),
+    message: '清除缓存成功',
+    type: 'success',
+    duration: 2000
+  })
+}
 const checkUpdate = async () => {
   // ElNotification({
   //   title: t('common.reminder'),
@@ -300,7 +324,7 @@ onMounted(async () => {
           {{ form.logPath }}<br />
           <el-button type="primary" @click="openLogPath">{{ t('easytier.openLogPath') }}</el-button>
           <el-button type="primary" @click="openLogPath2">{{
-            t('easytier.openLogPath')
+            t('easytier.openAppLogPath')
           }}</el-button>
           <el-button type="info" @click="copyLogPath">{{ t('easytier.copyLogPath') }}</el-button>
         </el-descriptions-item>
@@ -341,6 +365,25 @@ onMounted(async () => {
           <el-text type="primary" @click="openPath('https://github.com/EasyTier/EasyTier')">
             https://github.com/EasyTier/EasyTier
           </el-text>
+        </el-descriptions-item>
+
+        <el-descriptions-item>
+          <template #label>
+            <div class="cell-item">
+              <Icon icon="bi:window" />
+              {{ t('easytier.otherSetting') }}
+            </div>
+          </template>
+          <el-button type="info" @click="restoreWinState"
+            >{{ t('easytier.restoreWinState') }}
+          </el-button>
+          <el-button type="danger" @click="clearCache">{{ t('easytier.clearCache') }} </el-button>
+          <el-button
+            type="primary"
+            @click="openPath('https://github.com/xlc520/easytier-manager/issues')"
+          >
+            {{ t('easytier.feedback') }}
+          </el-button>
         </el-descriptions-item>
 
         <el-descriptions-item>

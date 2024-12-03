@@ -646,6 +646,7 @@ export default {
     logPath: '日志目录',
     appLogLevel: '管理器日志级别',
     openLogPath: '打开日志目录',
+    openAppLogPath: '打开管理器日志目录',
     openCorePath: '打开内核目录',
     copyLogPath: '复制日志目录',
     installService: '安装服务',
@@ -672,6 +673,11 @@ export default {
     unknown: '未知',
     openDirError: '打开目录失败',
     extractError: '解压失败',
-    extractSuccess: '解压成功'
+    extractSuccess: '解压成功',
+    windowState: '窗口状态',
+    restoreWinState: '恢复窗口状态',
+    otherSetting: '其他设置',
+    clearCache: '清除缓存',
+    feedback: '问题及意见反馈'
   }
 }

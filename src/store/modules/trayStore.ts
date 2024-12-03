@@ -3,6 +3,8 @@ import { defaultWindowIcon } from '@tauri-apps/api/app'
 import { Menu } from '@tauri-apps/api/menu'
 import { TrayIcon } from '@tauri-apps/api/tray'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { saveWindowState, StateFlags } from '@tauri-apps/plugin-window-state'
+import { ElMessageBox } from 'element-plus'
 import { defineStore } from 'pinia'
 
 // 托盘状态管理
@@ -10,12 +12,12 @@ export const useTrayStore = defineStore(
   'tray',
   () => {
     const DEFAULT_TRAY_NAME = 'main'
-
     const getTray = async () => {
       return await TrayIcon.getById(DEFAULT_TRAY_NAME)
     }
     // 退出应用程序
     const onQuit = async () => {
+      await saveWindowState(StateFlags.ALL)
       await getCurrentWindow().destroy()
     }
 
@@ -27,12 +29,35 @@ export const useTrayStore = defineStore(
       const isVisible = await window.isVisible()
       const isMinimized = await window.isMinimized()
       if (!isVisible || isMinimized) {
-        await window.unminimize()
+        // 确保窗口显示并取消最小化
         await window.show()
+        await window.unminimize()
+        // 恢复任务栏图标
+        await window.setSkipTaskbar(false)
         await window.setFocus()
       } else {
+        // 先隐藏窗口再最小化
+        await window.hide()
         await window.minimize()
+        // 隐藏任务栏图标
+        await window.setSkipTaskbar(true)
       }
+    }
+
+    // 处理窗口关闭事件
+    const handleWindowClose = async () => {
+      const window = getCurrentWindow()
+
+      // 监听窗口关闭事件
+      await window.onCloseRequested(async (event) => {
+        // 阻止默认关闭行为
+        event.preventDefault()
+        // 先隐藏窗口再最小化
+        await window.hide()
+        await window.minimize()
+        // 隐藏任务栏图标
+        await window.setSkipTaskbar(true)
+      })
     }
 
     // 保存事件处理函数的引用
@@ -145,6 +170,7 @@ export const useTrayStore = defineStore(
         tray.setIcon(await defaultWindowIcon())
         // await setTrayIcon(tray)
         await setTrayTooltip(undefined, tray)
+        handleWindowClose()
       } catch (error) {
         console.error('初始化托盘失败:', error)
       }

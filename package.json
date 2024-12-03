@@ -1,8 +1,8 @@
 {
   "name": "easytier-manager-pro",
   "version": "3.0.0",
-  "description": "EasyTier 管理器",
-  "displayName": "EasyTier 管理器",
+  "description": "EasyTier 管理器 Pro",
+  "displayName": "EasyTier 管理器 Pro",
   "author": {
     "name": "cheng",
     "email": "xulinch@88.com"
@@ -13,12 +13,9 @@
     "i": "pnpm install",
     "dev": "vite --mode base",
     "tauri": "tauri",
+    "tauri:build": "pnpm tauri build",
     "td": "pnpm tauri dev",
-    "tb": "pnpm tauri build",
     "tbd": "pnpm tauri build --debug",
-    "ta": "pnpm tauri add",
-    "tc": "pnpm tauri clean",
-    "tt": "pnpm tauri dev --target wasm",
     "ts:check": "vue-tsc --noEmit --skipLibCheck",
     "build": "vite build --mode pro",
     "build:pro": "vite build --mode pro",
