@@ -1,4 +1,4 @@
-name: EasyTier 管理器 Pro
+name: Release Pro
 
 on:
   workflow_dispatch:
