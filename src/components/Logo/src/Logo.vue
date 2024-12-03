@@ -2,6 +2,8 @@
 import { ref, watch, computed, onMounted, unref } from 'vue'
 import { useAppStore } from '@/store/modules/app'
 import { useDesign } from '@/hooks/web/useDesign'
+import { getAppVersion } from '@/utils/sysUtil'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 
 const { getPrefixCls } = useDesign()
 
@@ -17,8 +19,15 @@ const layout = computed(() => appStore.getLayout)
 
 const collapse = computed(() => appStore.getCollapse)
 
-onMounted(() => {
+const appVersion = ref('')
+
+onMounted(async () => {
   if (unref(collapse)) show.value = false
+  const version = await getAppVersion()
+  if (version) {
+    appVersion.value = version
+    await getCurrentWindow().setTitle(title.value + ' ' + version)
+  }
 })
 
 watch(
@@ -73,7 +82,7 @@ watch(
           }
         ]"
       >
-        {{ title }}
+        {{ title }} {{ appVersion }}
       </div>
     </router-link>
   </div>

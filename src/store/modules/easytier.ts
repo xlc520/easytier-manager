@@ -19,7 +19,7 @@ export const useEasyTierStore = defineStore(
     // 启动直接报错提示
     const errRunNotify = ref(true)
     const defaultFormData = ref()
-    const os = ref()
+    const os = ref('windows')
     const setConfigList = (list) => {
       configList.value = list
     }
@@ -35,6 +35,10 @@ export const useEasyTierStore = defineStore(
     }
     const getRunningItem = (configFileName: string) => {
       return runningList.value.find((i) => i.configFileName === configFileName)
+    }
+    const setRunningList = (list: RunningItem[]) => {
+      runningList.value = list
+      localStorage.setItem('runningList', JSON.stringify(runningList.value))
     }
     const addRunningList = (configFileName: string, pid: number) => {
       runningList.value.push({ configFileName, pid })
@@ -113,6 +117,7 @@ export const useEasyTierStore = defineStore(
       setFileListNoSuffix,
       loadRunningList,
       getRunningItem,
+      setRunningList,
       addRunningList,
       removeRunningList,
       setAllConfigOptions,

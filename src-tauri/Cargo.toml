@@ -1,6 +1,6 @@
 [package]
 authors = ["cheng"]
-description = "EasyTier 管理器"
+description = "EasyTier 管理器 Pro"
 edition = "2021"
 license = ""
 name = "easytier-manager-pro"

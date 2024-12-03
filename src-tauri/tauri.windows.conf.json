@@ -1,0 +1,23 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "identifier": "easytier-manager-pro",
+  "bundle": {
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "webviewInstallMode": {
+        "type": "embedBootstrapper",
+        "silent": true
+      },
+      "nsis": {
+        "displayLanguageSelector": true,
+        "installMode": "both",
+        "languages": [
+          "SimpChinese",
+          "English"
+        ]
+      }
+    }
+  }
+}

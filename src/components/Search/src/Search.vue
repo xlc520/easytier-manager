@@ -1,4 +1,4 @@
-<script setup lang="tsx">
+<!-- <script setup lang="tsx">
 import { Form, FormSchema, FormSetProps } from '@/components/Form'
 import { PropType, computed, unref, ref, watch, onMounted } from 'vue'
 import { propTypes } from '@/utils/propTypes'
@@ -268,4 +268,4 @@ const onFormValidate = (prop: FormItemProp, isValid: boolean, message: string) =
       />
     </div>
   </template>
-</template>
+</template> -->

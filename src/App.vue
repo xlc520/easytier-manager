@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import { computed, onBeforeMount, onBeforeUnmount } from 'vue'
-import { useAppStore } from '@/store/modules/app'
 import { ConfigGlobal } from '@/components/ConfigGlobal'
 import { useDesign } from '@/hooks/web/useDesign'
-import { useTrayStore } from '@/store/modules/trayStore'
-import { handleWindowClose } from '@/utils/sysUtil'
-import { checkDir } from '@/utils/fileUtil'
+import { useAppStore } from '@/store/modules/app'
 import { useEasyTierStore } from '@/store/modules/easytier'
+import { useTrayStore } from '@/store/modules/trayStore'
+import { checkDir } from '@/utils/fileUtil'
+import { restoreStateCurrent, StateFlags } from '@tauri-apps/plugin-window-state'
+import { computed, onBeforeMount } from 'vue'
 
 const { getPrefixCls } = useDesign()
 
@@ -22,7 +22,7 @@ appStore.initTheme()
 
 onBeforeMount(async () => {
   trayStore.initTray()
-  handleWindowClose()
+  restoreStateCurrent(StateFlags.ALL)
   checkDir()
   easytierStore.setConfigPath()
 })

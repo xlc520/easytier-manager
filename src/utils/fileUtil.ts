@@ -1,7 +1,6 @@
 import { CONFIG_PATH, LOG_PATH, RESOURCE_PATH } from '@/constants/easytier'
 // import { useI18n } from '@/hooks/web/useI18n'
 import { t } from '@/utils/i18nUtil'
-import { invoke } from '@tauri-apps/api/core'
 import { dirname, extname, join, resourceDir } from '@tauri-apps/api/path'
 import {
   BaseDirectory,
@@ -20,16 +19,9 @@ import { unzipSync } from 'fflate'
 import { attachConsole, error, info } from '@tauri-apps/plugin-log'
 // 启用 TargetKind::Webview 后，这个函数将把日志打印到浏览器控制台
 attachConsole()
+// ts文件无法直接使用useI18n，所以使用t函数
 // const { t } = useI18n()
-// 获取可执行文件路径
-export const getExecutablePath = async () => {
-  try {
-    // 使用 Tauri 的 invoke API 调用 Rust 后端函数
-    return await invoke('get_executable_path')
-  } catch (e: any) {
-    error('获取可执行文件路径时出错:' + e.message)
-  }
-}
+
 // 程序启动时，判断是否存在resource目录，不存在则创建
 export const checkDir = async (dirPath: string = RESOURCE_PATH) => {
   try {
@@ -44,7 +36,7 @@ export const checkDir = async (dirPath: string = RESOURCE_PATH) => {
       await mkdir(dirPath, { baseDir: BaseDirectory.Resource, recursive: true })
     }
   } catch (e: any) {
-    error('创建resource目录时出错:' + e.message)
+    error('创建resource目录时出错:' + JSON.stringify(e))
     throw e
   }
 }
@@ -114,7 +106,7 @@ export async function writeFileContent(
 
     await writeFile(filePath, content, finalOptions)
   } catch (e: any) {
-    error('写入文件时出错:' + e.message)
+    error('写入文件时出错:' + JSON.stringify(e))
     throw e
   }
 }
@@ -157,7 +149,7 @@ export async function readFileContent(
       return content
     }
   } catch (e: any) {
-    error(`Error reading file ${filePath}:` + e.message)
+    error(`Error reading file ${filePath}:` + JSON.stringify(e))
     return ''
   }
 }
@@ -168,7 +160,7 @@ export const listFiles = async (targetDir: string = RESOURCE_PATH) => {
     const entries = await readDir(targetDir, { baseDir: BaseDirectory.Resource })
     return entries.map((entry) => entry.name)
   } catch (e: any) {
-    error('Error listing resource files:' + e.message)
+    error('Error listing resource files:' + JSON.stringify(e))
     return []
   }
 }
@@ -181,7 +173,7 @@ export const listTomlFiles = async (targetDir: string = CONFIG_PATH) => {
     const entries = await readDir(targetDir, { baseDir: BaseDirectory.Resource })
     return entries.filter((entry) => entry.name.endsWith('.toml')).map((entry) => entry.name)
   } catch (e: any) {
-    error('Error listing resource files:' + e.message)
+    error('Error listing resource files:' + JSON.stringify(e))
     return []
   }
 }
@@ -205,7 +197,7 @@ export const getConfigJsonObj = async () => {
     })
     return JSON.parse(configJson as string)
   } catch (e: any) {
-    error('读取配置文件失败:' + e.message)
+    error('读取配置文件失败:' + JSON.stringify(e))
     await writeConfigJsonObj({})
     return {}
   }
@@ -288,7 +280,7 @@ export async function downloadFile(fileUrl: string): Promise<boolean> {
     })
     return true
   } catch (e: any) {
-    error('下载文件时出错:' + e.message)
+    error('下载文件时出错:' + JSON.stringify(e))
     ElNotification({
       title: t('common.reminder'),
       message: t('easytier.downLoadError'),
@@ -307,12 +299,7 @@ export async function openPath(path: string) {
   try {
     await open(path)
   } catch (e: any) {
-    error('打开资源管理器失败:' + e.message)
-    ElNotification({
-      title: t('common.reminder'),
-      message: t('easytier.openDirError'),
-      type: 'error'
-    })
+    error('打开资源管理器失败:' + JSON.stringify(e))
   }
 }
 
@@ -366,7 +353,7 @@ export async function extractFile(
           baseDir: BaseDirectory.Resource
         })
       } catch (e: any) {
-        error(`处理文件 ${filePath} 时出错:` + e.message)
+        error(`处理文件 ${filePath} 时出错:` + JSON.stringify(e))
       }
     }
 
@@ -383,7 +370,7 @@ export async function extractFile(
     // await deleteFileOrDir(dirPath)
     return true
   } catch (e: any) {
-    error('解压文件时出错:' + e.message)
+    error('解压文件时出错:' + JSON.stringify(e))
     ElNotification({
       title: t('common.reminder'),
       message: t('easytier.extractError'),

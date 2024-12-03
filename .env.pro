@@ -20,7 +20,7 @@ VITE_SOURCEMAP=false
 VITE_OUT_DIR=dist
 
 # 标题
-VITE_APP_TITLE="EasyTier 管理器"
+VITE_APP_TITLE="EasyTier 管理器 Pro"
 
 # 是否包分析
 VITE_USE_BUNDLE_ANALYZER=false
