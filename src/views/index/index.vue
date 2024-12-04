@@ -246,7 +246,7 @@ const updateRunningList = async (res?: any) => {
   return res
 }
 const startAction = async () => {
-  info('开始运行配置:' + currentNodeKey.value.configFileName)
+  info('开始运行配置:' + currentNodeKey.value.fileName!)
   await runEasyTierCore(currentNodeKey.value.fileName!)
     .then((res) => {
       info('运行配置结果:' + JSON.stringify(res))

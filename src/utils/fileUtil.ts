@@ -14,10 +14,11 @@ import {
   writeTextFile
 } from '@tauri-apps/plugin-fs'
 import { fetch } from '@tauri-apps/plugin-http'
+import { attachConsole, error, info } from '@tauri-apps/plugin-log'
 import { open } from '@tauri-apps/plugin-shell'
 import { ElNotification } from 'element-plus'
 import { unzipSync } from 'fflate'
-import { attachConsole, error, info } from '@tauri-apps/plugin-log'
+
 // 启用 TargetKind::Webview 后，这个函数将把日志打印到浏览器控制台
 attachConsole()
 // ts文件无法直接使用useI18n，所以使用t函数
@@ -219,12 +220,6 @@ export const deleteFileOrDir = async (path: string) => {
  */
 export async function downloadFile(fileUrl: string): Promise<boolean> {
   try {
-    ElNotification({
-      title: '下载中',
-      message: `开始下载`,
-      type: 'info',
-      duration: 8000
-    })
     info('开始下载:' + fileUrl)
     // 使用 Tauri 的 http plugin
     const response = await fetch(fileUrl, {

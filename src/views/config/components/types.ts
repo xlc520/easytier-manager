@@ -16,7 +16,7 @@ interface ConsoleLogger {
 }
 
 interface FileLogger {
-  level?: string | undefined | null
+  level?: string | undefined
   file?: string | undefined | null
   dir?: string | undefined | null
 }

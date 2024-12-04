@@ -6,6 +6,7 @@ import { getResourceDir } from './fileUtil'
 import { getPlatform, sleep } from './sysUtil'
 // 启用 TargetKind::Webview 后，这个函数将把日志打印到浏览器控制台
 attachConsole()
+
 /**
  * 执行外部程序并等待其完成
  * @param program 程序路径
@@ -91,6 +92,7 @@ export async function executeBack(
       args = [binPath, ...args]
       program = 'nohup'
     }
+    info('执行命令：' + program + '  ' + args.join(' ') + '  ' + options)
     // 创建命令对象
     const command = Command.create(program, args, options)
 

@@ -550,7 +550,9 @@ onMounted(async () => {
   if (!formData.value.hostname || formData.value.hostname === '') {
     formData.value.hostname = await getHostname()
   }
-  formData.value.file_logger.dir = await getLogsDir()
+  if (!formData.value.file_logger.dir || formData.value.file_logger.dir === '') {
+    formData.value.file_logger.dir = await getLogsDir()
+  }
   await getPublicPeers()
 })
 const peerChange = (value: any) => {

@@ -57,6 +57,12 @@ const mirrorUrlSelect = ref<string>('')
 
 const downLoadCore = async () => {
   for (let i = 0; i < GITHUB_MIRROR_URL.length; i++) {
+    ElNotification({
+      title: '下载中',
+      message: `使用加速源${i + 1}下载`,
+      type: 'info',
+      duration: 8000
+    })
     let url =
       GITHUB_MIRROR_URL[i].value +
       GITHUB_EASYTIER +
@@ -64,7 +70,6 @@ const downLoadCore = async () => {
       '/' +
       verSelect.value +
       fileName.value
-    console.log(url)
     const res = await downloadFile(url)
     if (res) {
       return
