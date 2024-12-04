@@ -10,7 +10,7 @@
 
 1.EasyTier 管理器 Pro v3.0.0版本和v2.x版本不兼容，建议卸载已安装的服务，再使用v3 版本
 
-2.建议优先下载免安装的zip包，解压到没有中文和空格的目录
+2.`easytier-manager-pro.zip`是免安装的zip压缩包，其他的exe、msi都是安装包
 
 3.推荐使用`easytier-manager-pro_3.0.0_x64-setup.exe`安装包
 

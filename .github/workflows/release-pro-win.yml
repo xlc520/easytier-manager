@@ -49,7 +49,7 @@ jobs:
         run: |
           mkdir release-package
           xcopy src-tauri\target\release\*.exe release-package\ /E /I /Y
-          xcopy resource\* release-package\resource\ /E /I /Y
+          xcopy src-tauri\target\release\resource\* release-package\resource\ /E /I /Y
           powershell Compress-Archive -Path release-package\* -DestinationPath easytier-manager-pro.zip
 
       # 上传 Artifacts，包括zip包
