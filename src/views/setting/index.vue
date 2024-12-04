@@ -2,13 +2,14 @@
 import { ContentWrap } from '@/components/ContentWrap'
 import {
   BIN_PATH,
+  CORE_INFO_API,
   EASYTIER_NAME,
   GITHUB_DOWN_URL,
   GITHUB_EASYTIER,
   GITHUB_MIRROR_URL,
   LOG_PATH,
-  RESOURCE_PATH,
-  VERSION_PREFIX
+  PROXY_URL,
+  RESOURCE_PATH
 } from '@/constants/easytier'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useStorage } from '@/hooks/web/useStorage'
@@ -20,7 +21,7 @@ import { useClipboard } from '@vueuse/core'
 import { ElInput, ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import { template } from 'lodash-es'
 import { onMounted, reactive, ref, unref } from 'vue'
-
+import { fetch } from '@tauri-apps/plugin-http'
 const { t } = useI18n()
 const { clear: storageClear } = useStorage('localStorage')
 const fileName = ref('')
@@ -33,37 +34,25 @@ const form = reactive({
   appLogLevel: ''
 })
 
-const verSelect = ref<string>('2.0.3')
-const verOptions = [
+const verSelect = ref<string>('v2.0.3')
+const verOptions = ref([
   {
-    value: '2.1.0',
-    label: '2.1.0'
+    name: 'v2.1.0',
+    tag_name: 'v2.1.0'
   },
   {
-    value: '2.1.1',
-    label: '2.1.1'
+    name: 'v2.2.0',
+    tag_name: 'v2.2.0'
   },
   {
-    value: '2.1.2',
-    label: '2.1.2'
+    name: 'v2.0.3',
+    tag_name: 'v2.0.3'
   },
   {
-    value: '2.1.3',
-    label: '2.1.3'
-  },
-  {
-    value: '2.2.0',
-    label: '2.2.0'
-  },
-  {
-    value: '2.0.3',
-    label: '2.0.3'
-  },
-  {
-    value: '1.2.3',
-    label: '1.2.3'
+    name: 'v1.2.3',
+    tag_name: 'v1.2.3'
   }
-]
+])
 const mirrorUrlSelect = ref<string>('')
 
 const downLoadCore = async () => {
@@ -73,22 +62,16 @@ const downLoadCore = async () => {
       GITHUB_EASYTIER +
       GITHUB_DOWN_URL +
       '/' +
-      VERSION_PREFIX +
       verSelect.value +
       fileName.value
+    console.log(url)
     const res = await downloadFile(url)
     if (res) {
       return
     } else {
       // 如果所有加速链接都下载失败，则尝试直接下载
       if (i === GITHUB_MIRROR_URL.length - 1) {
-        url =
-          GITHUB_EASYTIER +
-          GITHUB_DOWN_URL +
-          '/' +
-          VERSION_PREFIX +
-          verSelect.value +
-          fileName.value
+        url = GITHUB_EASYTIER + GITHUB_DOWN_URL + '/' + verSelect.value + fileName.value
         const res = await downloadFile(url)
         if (res) {
           return
@@ -118,8 +101,9 @@ const verSelectChange = (val: string) => {
   fileName.value = winUrlTemplate({
     osType: getOsType(),
     osArch: getArch(),
-    version: VERSION_PREFIX + val
+    version: val
   })
+  console.log(fileName.value)
 }
 const checkCorePath = async () => {
   const res = await runEasyTierCli(['-V'])
@@ -201,6 +185,17 @@ const clearCache = async () => {
     duration: 2000
   })
 }
+const getReleaseInfo = async () => {
+  const response = await fetch(PROXY_URL + CORE_INFO_API, {
+    method: 'GET',
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.95 Safari/537.36'
+    },
+    connectTimeout: 30000
+  })
+  verOptions.value = await response.json()
+}
 const checkUpdate = async () => {
   // ElNotification({
   //   title: t('common.reminder'),
@@ -221,6 +216,7 @@ onMounted(async () => {
   form.corePath = await join(await resourceDir(), BIN_PATH)
   form.logPath = await join(await resourceDir(), LOG_PATH)
   form.appVersion = await getAppVersion()
+  await getReleaseInfo()
   // form.appLogLevel = await getLogLevel()
   const winUrlTemplate = template(EASYTIER_NAME)
   // easytier-windows-x86_64-v2.0.3.zip
@@ -228,7 +224,7 @@ onMounted(async () => {
   fileName.value = winUrlTemplate({
     osType: getOsType(),
     osArch: getArch(),
-    version: VERSION_PREFIX + verSelect.value
+    version: verSelect.value
   })
 })
 </script>
@@ -276,7 +272,7 @@ onMounted(async () => {
               {{ t('easytier.downLoadCore') }}
             </div>
           </template>
-          1.选择版本时可以手动输入，对应官方内核仓库的版本，例如：2.0.3<br />
+          1.选择版本时可以手动输入，对应官方内核仓库的版本，例如：v2.1.0<br />
           2.Github加速链接为空默认随机加速链接，下载视网络情况而定，一般30秒以内<br />
           3.下载完后点击安装，安装成功后检测内核是否存在<br />
           版本
@@ -292,9 +288,9 @@ onMounted(async () => {
           >
             <el-option
               v-for="item in verOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              :key="item.name"
+              :label="item.name"
+              :value="item.tag_name"
             />
           </el-select>
           &emsp;Github加速链接

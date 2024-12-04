@@ -71,7 +71,7 @@
       "identifier": "fs:write-all",
       "allow": [
         {
-          "path": "$RESOURCE/*"
+          "path": "**"
         }
       ]
     },
@@ -79,7 +79,7 @@
       "identifier": "fs:read-all",
       "allow": [
         {
-          "path": "$RESOURCE/**"
+          "path": "**"
         }
       ]
     },

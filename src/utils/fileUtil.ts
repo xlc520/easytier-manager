@@ -10,7 +10,8 @@ import {
   readFile,
   readTextFile,
   remove,
-  writeFile
+  writeFile,
+  writeTextFile
 } from '@tauri-apps/plugin-fs'
 import { fetch } from '@tauri-apps/plugin-http'
 import { open } from '@tauri-apps/plugin-shell'
@@ -92,19 +93,15 @@ export async function writeFileContent(
   }
 ): Promise<void> {
   try {
-    const defaultOptions = {
-      baseDir: BaseDirectory.Resource,
-      append: false,
-      createNew: false
-    }
-    const finalOptions = { ...defaultOptions, ...options }
+    const finalOptions = { baseDir: BaseDirectory.Resource, append: false, ...options }
     await checkDir(filePath)
     if (typeof content === 'string') {
-      const encoder = new TextEncoder()
-      content = encoder.encode(content)
+      // 使用 writeTextFile 处理字符串内容
+      await writeTextFile(filePath, content, finalOptions)
+    } else {
+      // 二进制内容继续使用 writeFile
+      await writeFile(filePath, content, finalOptions)
     }
-
-    await writeFile(filePath, content, finalOptions)
   } catch (e: any) {
     error('写入文件时出错:' + JSON.stringify(e))
     throw e

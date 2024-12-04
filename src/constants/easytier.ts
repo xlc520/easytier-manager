@@ -10,8 +10,8 @@ export const NSSM_NAME = 'nssm'
  * 配置文件名
  */
 export const CONFIG_FILE_NAME = 'data.json'
-
-export const CORE_INFO_API = 'https://api.github.com/repos/EasyTier/EasyTier/releases/latest'
+export const PROXY_URL = 'http://web-proxy.cheng.us.kg/'
+export const CORE_INFO_API = 'https://api.github.com/repos/EasyTier/EasyTier/releases'
 export const GITHUB_EASYTIER = 'https://github.com/EasyTier/EasyTier'
 export const GITHUB_DOWN_URL = '/releases/download'
 export const VERSION_PREFIX = 'v'

@@ -47,7 +47,7 @@ const toDocumentEasyTier = () => open('https://github.com/EasyTier/EasyTier')
       <!-- <Screenfull v-if="screenfull" class="custom-hover" color="var(--top-header-text-color)" /> -->
       <SizeDropdown v-if="size" class="custom-hover" color="var(--top-header-text-color)" />
       <LocaleDropdown v-if="locale" class="custom-hover" color="var(--top-header-text-color)" />
-      <div class="ml-1 mr-4 custom-hover" @click="toDocumentEasyTier">
+      <div class="custom-hover" @click="toDocumentEasyTier">
         <el-tooltip content="EasyTier Github" placement="bottom" effect="light">
           <Icon :size="18" icon="devicon:github" class="cursor-pointer" />
         </el-tooltip>
