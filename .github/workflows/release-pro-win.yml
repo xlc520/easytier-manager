@@ -48,19 +48,30 @@ jobs:
       - name: Create zip package
         run: |
           mkdir release-package
-          xcopy src-tauri\target\release\*.exe release-package\ /E /I /Y
+          xcopy src-tauri\target\release\*.exe release-package\ /Y
           xcopy src-tauri\target\release\resource\* release-package\resource\ /E /I /Y
           powershell Compress-Archive -Path release-package\* -DestinationPath easytier-manager-pro.zip
 
-      # 上传 Artifacts，包括zip包
-      - name: Upload artifacts
+      # 上传便携版zip包
+      - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ matrix.os }}
-          path: |
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/nsis/*.exe
-            easytier-manager-pro.zip
+          name: easytier-manager-pro-portable
+          path: easytier-manager-pro.zip
+
+      # 上传 NSIS 安装包
+      - name: Upload NSIS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-manager-pro-setup
+          path: src-tauri/target/release/bundle/nsis/*.exe
+
+      # 上传 MSI 安装包
+      - name: Upload MSI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-manager-pro-msi
+          path: src-tauri/target/release/bundle/msi/*.msi
 
       # 发布到 GitHub Releases，包括zip包
       - name: Publish Release
