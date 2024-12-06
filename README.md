@@ -43,12 +43,15 @@
 - `easytier-manager-win7-x64_2.0.0.exe`: 64位 Windows 7 系统安装包
 - `tar.gz` `deb` `rpm` `AppImage`：Linux系统上使用(尚未测试)
 
+### webview 下载
+
+https://developer.microsoft.com/en-us/microsoft-edge/webview2/?form=MA13LH#download
+
 ## 介绍
 
 EasyTier 由 Rust 和 Tokio 驱动，一个简单、安全、去中心化的组网方案
 
-EasyTier 管理器 整合Vue3 + Vite5 + Electron33 + Element-Plus， 是一个基于 `element-plus` 免费开源的组网管理器。使用了最新的
-`vue3`，`vite5`，`TypeScript` 等主流技术开发。
+EasyTier 管理器 整合Vue3 + Vite5 + Electron33 + Element-Plus， 是一个基于 `element-plus` 免费开源的组网管理器。使用了最新的 `vue3`，`vite5`，`TypeScript` 等主流技术开发。
 
 ## 特性
 

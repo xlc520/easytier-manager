@@ -9,7 +9,7 @@
       },
       "nsis": {
         "displayLanguageSelector": true,
-        "installMode": "both",
+        "installMode": "perMachine",
         "languages": [
           "SimpChinese",
           "English"

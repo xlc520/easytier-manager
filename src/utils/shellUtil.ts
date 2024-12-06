@@ -1,6 +1,6 @@
 import { CONFIG_PATH, NSSM_NAME } from '@/constants/easytier'
 import { join, resourceDir } from '@tauri-apps/api/path'
-import { attachConsole, debug, error, info } from '@tauri-apps/plugin-log'
+import { attachConsole, error, info } from '@tauri-apps/plugin-log'
 import { Command, type SpawnOptions } from '@tauri-apps/plugin-shell'
 import { getResourceDir } from './fileUtil'
 import { getPlatform, sleep } from './sysUtil'
@@ -84,15 +84,18 @@ export async function executeBack(
     //   ? Command.create('cmd', ['/c', 'start', program, ...args], options)
     //   : Command.create('nohup', [program, ...args], options);
     const binPath = await join(await getResourceDir(), program)
+    const resourcePath = await getResourceDir()
     if (platform === 'windows') {
-      args = ['/c', 'start', '/b', binPath, ...args]
+      // start ["title"] [/d路径] [选项] 命令 [参数]
+      // cmd /c start "easytier-core" /b /D "C:\Program Files\resource" easytier-core -c "C:\Program Files\config\c95f9383-6ead-4360-97bc-0ee3897d11cf.toml"
+      args = ['/c', 'start', `"${program}"`, '/b', '/d', `"${resourcePath}"`, program, ...args]
       program = 'cmd'
     }
     if (platform === 'linux' || platform === 'macos') {
       args = [binPath, ...args]
       program = 'nohup'
     }
-    info('执行命令：' + program + '  ' + args.join(' ') + '  ' + options)
+    info('执行命令：' + program + '  ' + args.join(' ') + '  ' + JSON.stringify(options))
     // 创建命令对象
     const command = Command.create(program, args, options)
 
@@ -109,10 +112,10 @@ export async function executeBack(
     //   info(`[${program}] 进程退出, code: ${data.code}, signal: ${data.signal}`)
     // })
 
-    // // 监听错误
-    // command.on('error', (error) => {
-    //   error(`[${program}] 错误:`, error)
-    // })
+    // 监听错误
+    command.on('error', (e: any) => {
+      error(`[${program}] 错误:` + JSON.stringify(e))
+    })
 
     // 启动进程
     const child = await command.spawn()

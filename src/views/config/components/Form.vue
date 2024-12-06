@@ -17,7 +17,7 @@
             <el-input
               v-model="formData.hostname"
               type="text"
-              maxlength="32"
+              maxlength="36"
               show-word-limit
               clearable
             />
@@ -28,7 +28,7 @@
             <el-input
               v-model="formData.instance_name"
               type="text"
-              maxlength="32"
+              maxlength="36"
               show-word-limit
               clearable
             />
@@ -41,7 +41,7 @@
             <el-input
               v-model="formData.network_identity.network_name"
               type="text"
-              maxlength="32"
+              maxlength="36"
               show-word-limit
               clearable
             />

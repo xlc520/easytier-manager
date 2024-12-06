@@ -13,7 +13,7 @@ import {
 } from '@/constants/easytier'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useStorage } from '@/hooks/web/useStorage'
-import { downloadFile, extractFile, openPath } from '@/utils/fileUtil'
+import { downloadFile, extractFile, getLogsDir, getResourceDir, openPath } from '@/utils/fileUtil'
 import { runEasyTierCli } from '@/utils/shellUtil'
 import { getAppVersion, getArch, getOsType } from '@/utils/sysUtil'
 import { appDataDir, appLogDir, join, resourceDir } from '@tauri-apps/api/path'
@@ -30,6 +30,7 @@ const form = reactive({
   corePath: '',
   coreVersion: '',
   logPath: '',
+  logAppPath: '',
   appVersion: '',
   appLogLevel: ''
 })
@@ -165,7 +166,7 @@ const openLogPath = async () => {
   await openPath(resourcePath)
 }
 const openLogPath2 = async () => {
-  const resourcePath = await join(await appLogDir())
+  const resourcePath = await appLogDir()
   await openPath(resourcePath)
 }
 const restoreWinState = async () => {
@@ -218,8 +219,9 @@ onMounted(async () => {
   if (ver && ver !== 403) {
     form.coreVersion = ver
   }
-  form.corePath = await join(await resourceDir(), BIN_PATH)
-  form.logPath = await join(await resourceDir(), LOG_PATH)
+  form.corePath = await getResourceDir()
+  form.logPath = await getLogsDir()
+  form.logAppPath = await appLogDir()
   form.appVersion = await getAppVersion()
   await getReleaseInfo()
   // form.appLogLevel = await getLogLevel()
@@ -324,10 +326,12 @@ onMounted(async () => {
           </template>
           {{ form.logPath }}<br />
           <el-button type="primary" @click="openLogPath">{{ t('easytier.openLogPath') }}</el-button>
+          <br />
+          {{ form.logAppPath }}<br />
           <el-button type="primary" @click="openLogPath2">{{
             t('easytier.openAppLogPath')
           }}</el-button>
-          <el-button type="info" @click="copyLogPath">{{ t('easytier.copyLogPath') }}</el-button>
+          <!-- <el-button type="info" @click="copyLogPath">{{ t('easytier.copyLogPath') }}</el-button> -->
         </el-descriptions-item>
 
         <!-- <el-descriptions-item>
