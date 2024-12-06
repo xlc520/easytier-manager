@@ -1,0 +1,63 @@
+name: CI Pro Windows
+
+on:
+  workflow_dispatch:
+
+permissions: write-all
+env:
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+
+jobs:
+  build:
+    if: contains('["xlc520"]', github.actor)
+    permissions:
+      contents: write
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ windows-latest ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      # 安装 Rust
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # 安装依赖
+      - name: Install dependencies
+        run: pnpm i
+
+      # 打包
+      - name: Build application
+        run: pnpm tauri:build
+
+      # 打包成zip文件
+      - name: Create zip package
+        run: |
+          mkdir release-package
+          xcopy src-tauri\target\release\*.exe release-package\ /E /I /Y
+          xcopy src-tauri\target\release\resource\* release-package\resource\ /E /I /Y
+          powershell Compress-Archive -Path release-package\* -DestinationPath easytier-manager-pro.zip
+
+      # 上传 Artifacts，包括zip包
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
+            easytier-manager-pro.zip
