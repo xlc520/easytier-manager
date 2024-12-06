@@ -27,7 +27,7 @@ const easyTierStore = useEasyTierStore()
 const trayStore = useTrayStore()
 const logDialogVisible = ref(false)
 const descriptionCollapse = ref(false)
-// const runningTag = ref(false)
+const runningTag2 = ref(false)
 const logData = ref('')
 const MonacoEditRef = ref()
 const wordWrap = ref('off')
@@ -167,6 +167,7 @@ const getNodeInfo = async () => {
     const res = await runEasyTierCli(['node'])
     if (res === 403) {
       easyTierStore.setStopLoop(true)
+      runningTag2.value = false
     }
     if (!res) {
       retryTime++
@@ -180,6 +181,7 @@ const getNodeInfo = async () => {
       retryTime = maxRetry
     }
     nodeInfo.value = parseNodeInfo(res) as string
+    runningTag2.value = true
     await sleep(10000)
   }
 }
@@ -195,6 +197,7 @@ const getPeerInfo = async () => {
     if (res === 403) {
       easyTierStore.setStopLoop(true)
       easyTierStore.removeRunningList(currentNodeKey.value.configFileName)
+      runningTag2.value = false
       continue
     }
     if (!res) {
@@ -216,6 +219,7 @@ const getPeerInfo = async () => {
       value.cost = routeCost(value.cost)
       value.nat_type = getNatType(value.nat_type)
     })
+    runningTag2.value = true
     if (
       easyTierStore.p2pNotify &&
       filter.length > 0 &&
@@ -261,6 +265,7 @@ const startAction = async () => {
       // runningTag.value = true
     })
     .catch(() => {
+      runningTag2.value = false
       ElMessageBox({
         title: '哦豁，出错啦',
         message: '运行当前配置出错，请在设置检查是否有核心程序，或核心程序是否有可执行权限',
@@ -299,6 +304,7 @@ const stopAction = async () => {
   easyTierStore.setStopLoop(true)
   easyTierStore.removeRunningList(currentNodeKey.value.configFileName)
   await updateRunningList()
+  runningTag2.value = false
   // currentNodeKeyChange()
 }
 const reset = async () => {
@@ -307,7 +313,7 @@ const reset = async () => {
   descriptionCollapse.value = false
   easyTierStore.removeRunningList(currentNodeKey.value.configFileName)
   await updateRunningList()
-  // runningTag.value = false
+  runningTag2.value = false
   // await getList()
 }
 const viewLogAction = async () => {
@@ -337,6 +343,7 @@ const currentNodeKeyChange = async () => {
     nodeInfo.value = {}
     peerInfo.value.length = 0
     descriptionCollapse.value = false
+    runningTag2.value = false
     easyTierStore.setStopLoop(true)
     await getConfigList()
   } catch (e: any) {
@@ -367,14 +374,14 @@ onMounted(async () => {
   await checkCore()
   await getConfigList()
   easyTierStore.loadRunningList()
+  getNodeInfo()
+  getPeerInfo()
   const configName = easyTierStore.getLastRunConfigName()
   if (configName) {
     currentNodeKey.value.configFileName = configName
     currentNodeKey.value.fileName = configName + '.toml'
     currentNodeKeyChange()
   }
-  // getNodeInfo()
-  // getPeerInfo()
 })
 </script>
 
@@ -388,7 +395,7 @@ onMounted(async () => {
         :show="descriptionCollapse"
       />
       <small
-        >注：当前配置是否在运行，以<b>选择框后的状态</b>为主，由于核心的原因，可能无法获取指定配置的节点信息</small
+        >注：当前配置是否在运行，以<b>选择框后的状态或表格数据</b>为主；如果是精简魔改系统，运行状态可能不准确，有数据更新则为运行</small
       >
       <div class="mt-3 mb-10px">
         <ElSelect
@@ -425,10 +432,10 @@ onMounted(async () => {
             <span class="custom-inactive-action">×</span>
           </template>
         </el-switch>
-        <BaseButton type="success" @click="startAction" :disabled="runningTag"
+        <BaseButton type="success" @click="startAction" :disabled="runningTag || runningTag2"
           >{{ t('easytier.startNet') }}
         </BaseButton>
-        <BaseButton type="danger" @click="stopAction" :disabled="!runningTag"
+        <BaseButton type="danger" @click="stopAction" :disabled="!runningTag && !runningTag2"
           >{{ t('easytier.stopNet') }}
         </BaseButton>
         <BaseButton type="info" @click="viewLogAction">{{ t('easytier.view_log') }}</BaseButton>

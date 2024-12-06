@@ -19,6 +19,7 @@ import {
   runEasyTierCli,
   startServiceOnWindows,
   stopServiceOnWindows,
+  testWMIC,
   uninstallServiceOnWindows
 } from '@/utils/shellUtil'
 import { getHostname, getOsType } from '@/utils/sysUtil'
@@ -42,6 +43,7 @@ const dialogTitle = ref('')
 const actionType = ref('')
 const editType = ref('')
 const saveLoading = ref(false)
+const noWMIC = ref(false)
 const formRef = ref()
 const formData = ref<FormData>(cloneDeep(DefaultData.defaultFormData))
 const configFileName = ref<string | null>(null)
@@ -484,6 +486,7 @@ onMounted(async () => {
   await getConfigList()
   logsDir.value = await getLogsDir()
   easyTierStore.setOs(await getOsType())
+  noWMIC.value = !(await testWMIC())
 })
 </script>
 
@@ -499,6 +502,9 @@ onMounted(async () => {
           >{{ t('easytier.reloadNetConfig') }}
         </BaseButton>
       </div>
+      <el-text v-if="noWMIC" type="danger" effect="dark"
+        >当前系统没有 wmic 命令，建议安装服务，使用当前页面的服务启动停止组网</el-text
+      ><br />
       <el-text v-if="easyTierStore.os === 'windows'" type="info" effect="dark"
         >如果组网是由服务启动的，则只能使用启动服务和停止服务，无法使用首页的启动和停止</el-text
       >

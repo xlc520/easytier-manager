@@ -27,7 +27,8 @@ export async function executeCmd(
   options: SpawnOptions = {}
 ): Promise<any> {
   try {
-    // debug('执行命令:' + program + ' ' + args.join(' '))
+    // info('执行命令：' + program)
+    // info('执行参数：' + JSON.stringify(args))
     // 创建命令实例
     const command = Command.create(program, args, {
       cwd: options.cwd,
@@ -84,18 +85,22 @@ export async function executeBack(
     //   ? Command.create('cmd', ['/c', 'start', program, ...args], options)
     //   : Command.create('nohup', [program, ...args], options);
     const binPath = await join(await getResourceDir(), program)
-    const resourcePath = await getResourceDir()
+    // const resourcePath = await getResourceDir()
     if (platform === 'windows') {
       // start ["title"] [/d路径] [选项] 命令 [参数]
       // cmd /c start "easytier-core" /b /D "C:\Program Files\resource" easytier-core -c "C:\Program Files\config\c95f9383-6ead-4360-97bc-0ee3897d11cf.toml"
-      args = ['/c', 'start', `"${program}"`, '/b', '/d', `"${resourcePath}"`, program, ...args]
+      // args = ['/c', 'start', `"${program}"`, '/b', '/d', `"${resourcePath}"`, program, ...args]
+      // cmd /c start "easytier-core" /b "C:\Program Files\resource\easytier-core" -c "C:\Program Files\config\c95f9383-6ead-4360-97bc-0ee3897d11cf.toml"
+      // args = ['/c', 'start', `"${program}"`, '/b', `"${binPath}"`, ...args]
+      args = ['/c', 'start', '', '/b', `${binPath}`, ...args]
       program = 'cmd'
     }
     if (platform === 'linux' || platform === 'macos') {
       args = [binPath, ...args]
       program = 'nohup'
     }
-    info('执行命令：' + program + '  ' + args.join(' ') + '  ' + JSON.stringify(options))
+    info('执行命令：' + program)
+    info('执行参数：' + JSON.stringify(args))
     // 创建命令对象
     const command = Command.create(program, args, options)
 
@@ -131,7 +136,7 @@ export async function executeBack(
 // 运行 easytier-core 配置
 export async function runEasyTierCore(configFileName: string) {
   const corePath = await join(await resourceDir(), CONFIG_PATH, configFileName)
-  return await executeBack('easytier-core', ['-c', corePath])
+  return await executeBack('easytier-core', ['-c', `${corePath}`])
 }
 
 // 运行 easytier-cli 配置
@@ -201,6 +206,16 @@ export async function killAllEasyTierCoreProcessUnix() {
   return await executeCmd('killall', ['easytier-core'])
 }
 
+// 测试是否有 wmic 命令
+export const testWMIC = async () => {
+  try {
+    await executeCmd('wmic', ['os'], { encoding: 'gbk' })
+    return true
+  } catch (_e: any) {
+    return false
+  }
+}
+
 /**
  * 获取正在运行的程序信息
  * @param {string} [programName] - 可选的程序名，用于模糊查询
@@ -209,7 +224,7 @@ export async function killAllEasyTierCoreProcessUnix() {
 export const getRunningProcesses = async (
   programName: string = 'easytier'
 ): Promise<Array<any>> => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let args: string[] = []
     let program = ''
     let encoding = 'utf-8'
