@@ -2,28 +2,33 @@
 import { ContentWrap } from '@/components/ContentWrap'
 import {
   BIN_PATH,
-  CORE_INFO_API,
   EASYTIER_NAME,
   GITHUB_DOWN_URL,
   GITHUB_EASYTIER,
   GITHUB_MIRROR_URL,
   LOG_PATH,
+  MANAGER_INFO_API,
+  MANAGER_REPO_URL,
   PROXY_URL,
-  RESOURCE_PATH
+  RESOURCE_PATH,
+  USER_AGENT
 } from '@/constants/easytier'
 import { useI18n } from '@/hooks/web/useI18n'
 import { useStorage } from '@/hooks/web/useStorage'
+import { useEasyTierStore } from '@/store/modules/easytier'
 import { downloadFile, extractFile, getLogsDir, getResourceDir, openPath } from '@/utils/fileUtil'
 import { runEasyTierCli } from '@/utils/shellUtil'
 import { getAppVersion, getArch, getOsType } from '@/utils/sysUtil'
 import { appDataDir, appLogDir, join, resourceDir } from '@tauri-apps/api/path'
+import { fetch } from '@tauri-apps/plugin-http'
 import { useClipboard } from '@vueuse/core'
 import { ElInput, ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import { template } from 'lodash-es'
 import { onMounted, reactive, ref, unref } from 'vue'
-import { fetch } from '@tauri-apps/plugin-http'
+
 const { t } = useI18n()
 const { clear: storageClear } = useStorage('localStorage')
+const easyTierStore = useEasyTierStore()
 const fileName = ref('')
 const checkCorePathSuccess = ref(false)
 const form = reactive({
@@ -191,29 +196,51 @@ const clearCache = async () => {
     duration: 2000
   })
 }
-const getReleaseInfo = async () => {
-  const response = await fetch(PROXY_URL + CORE_INFO_API, {
+const checkUpdate = async () => {
+  ElNotification({
+    title: t('common.reminder'),
+    message: '开始检测新版本',
+    type: 'info',
+    duration: 2000
+  })
+  const response = await fetch(PROXY_URL + MANAGER_INFO_API, {
     method: 'GET',
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.95 Safari/537.36'
-    },
+    headers: { 'User-Agent': USER_AGENT },
     connectTimeout: 30000
   })
-  verOptions.value = await response.json()
-}
-const checkUpdate = async () => {
-  // ElNotification({
-  //   title: t('common.reminder'),
-  //   message: '更新功能还有待测试，如果失败请到Github下载最新',
-  //   type: 'warning',
-  //   duration: 4000
-  // })
-  // await checkForUpdatesAndNotify()
+  const data = await response.json()
+  console.log('tagName', data[0].tag_name)
+  console.log('appVersion', 'v' + form.appVersion)
+  if (data && data.length > 0 && data[0].tag_name !== 'v' + form.appVersion) {
+    ElMessageBox.confirm('是否去官网下载更新？', t('common.reminder'), {
+      confirmButtonText: t('common.delOk'),
+      cancelButtonText: t('common.delCancel'),
+      type: 'warning'
+    })
+      .then(() => {
+        open(MANAGER_REPO_URL)
+      })
+      .catch(() => {
+        ElNotification({
+          title: t('common.reminder'),
+          message: t('common.accessError'),
+          type: 'error',
+          duration: 2000
+        })
+      })
+  } else {
+    ElNotification({
+      title: t('common.reminder'),
+      message: '暂无更新',
+      type: 'warning',
+      duration: 3000
+    })
+  }
 }
 // const changeAppLogLevel = async () => {
 //   // await setLogLevel(form.appLogLevel)
 // }
+
 onMounted(async () => {
   const ver = await runEasyTierCli(['-V'])
   if (ver && ver !== 403) {
@@ -223,7 +250,7 @@ onMounted(async () => {
   form.logPath = await getLogsDir()
   form.logAppPath = await appLogDir()
   form.appVersion = await getAppVersion()
-  await getReleaseInfo()
+  verOptions.value = await easyTierStore.getCoreReleaseInfo()
   // form.appLogLevel = await getLogLevel()
   const winUrlTemplate = template(EASYTIER_NAME)
   // easytier-windows-x86_64-v2.0.3.zip
@@ -328,9 +355,9 @@ onMounted(async () => {
           <el-button type="primary" @click="openLogPath">{{ t('easytier.openLogPath') }}</el-button>
           <br />
           {{ form.logAppPath }}<br />
-          <el-button type="primary" @click="openLogPath2">{{
-            t('easytier.openAppLogPath')
-          }}</el-button>
+          <el-button type="primary" @click="openLogPath2"
+            >{{ t('easytier.openAppLogPath') }}
+          </el-button>
           <!-- <el-button type="info" @click="copyLogPath">{{ t('easytier.copyLogPath') }}</el-button> -->
         </el-descriptions-item>
 
@@ -399,9 +426,9 @@ onMounted(async () => {
             </div>
           </template>
           {{ form.appVersion }}
-          <!-- <el-button class="ml-5" type="info" @click="checkUpdate"
-            >{{ t('easytier.checkUpdate') }}
-          </el-button> -->
+          <el-button class="ml-5" type="info" @click="checkUpdate"
+            >{{ t('easytier.checkUpdate') }}(简易版)
+          </el-button>
         </el-descriptions-item>
       </el-descriptions>
     </ContentWrap>

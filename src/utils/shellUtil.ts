@@ -1,9 +1,11 @@
 import { CONFIG_PATH, NSSM_NAME } from '@/constants/easytier'
+import { invoke } from '@tauri-apps/api/core'
 import { join, resourceDir } from '@tauri-apps/api/path'
 import { attachConsole, error, info } from '@tauri-apps/plugin-log'
 import { Command, type SpawnOptions } from '@tauri-apps/plugin-shell'
-import { getResourceDir } from './fileUtil'
+import { getCliDir, getCoreDir, getResourceDir } from './fileUtil'
 import { getPlatform, sleep } from './sysUtil'
+
 // 启用 TargetKind::Webview 后，这个函数将把日志打印到浏览器控制台
 attachConsole()
 
@@ -81,33 +83,37 @@ export async function executeBack(
   try {
     // 根据操作系统选择不同的命令
     const platform = await getPlatform()
-    // const command = isWindows
-    //   ? Command.create('cmd', ['/c', 'start', program, ...args], options)
-    //   : Command.create('nohup', [program, ...args], options);
     const binPath = await join(await getResourceDir(), program)
     // const resourcePath = await getResourceDir()
+    let finalProgram = program
+    let finalArgs = args
     if (platform === 'windows') {
       // start ["title"] [/d路径] [选项] 命令 [参数]
       // cmd /c start "easytier-core" /b /D "C:\Program Files\resource" easytier-core -c "C:\Program Files\config\c95f9383-6ead-4360-97bc-0ee3897d11cf.toml"
       // args = ['/c', 'start', `"${program}"`, '/b', '/d', `"${resourcePath}"`, program, ...args]
       // cmd /c start "easytier-core" /b "C:\Program Files\resource\easytier-core" -c "C:\Program Files\config\c95f9383-6ead-4360-97bc-0ee3897d11cf.toml"
       // args = ['/c', 'start', `"${program}"`, '/b', `"${binPath}"`, ...args]
-      args = ['/c', 'start', '', '/b', `${binPath}`, ...args]
-      program = 'cmd'
+      // Windows 下使用 start 命令在后台运行
+      finalArgs = ['/c', 'start', '', '/b', program, ...args]
+      finalProgram = 'cmd'
+      // 使用 runas 提升权限
+      // finalArgs = ['/user:Administrator', '/c', 'start', '', '/b', `${binPath}`, ...args]
+      // finalProgram = 'runas'
     }
     if (platform === 'linux' || platform === 'macos') {
-      args = [binPath, ...args]
-      program = 'nohup'
+      // 使用 sudo 运行 nohup
+      finalArgs = ['nohup', binPath, ...args]
+      finalProgram = 'sudo'
     }
-    info('执行命令：' + program)
-    info('执行参数：' + JSON.stringify(args))
+    info('执行命令：' + finalProgram)
+    info('执行参数：' + JSON.stringify(finalArgs))
     // 创建命令对象
-    const command = Command.create(program, args, options)
+    const command = Command.create(finalProgram, finalArgs, options)
 
-    // // 监听输出(可选)
-    // command.stdout.on('data', (line) => {
-    //   info(`[${program}] stdout:`, line)
-    // })
+    // 监听输出(可选)
+    command.stdout.on('data', (line) => {
+      info(`[${program}] 输出:` + line)
+    })
     // command.stderr.on('data', (line) => {
     //   error(`[${program}] stderr:`, line)
     // })
@@ -134,16 +140,45 @@ export async function executeBack(
 }
 
 // 运行 easytier-core 配置
-export async function runEasyTierCore(configFileName: string) {
-  const corePath = await join(await resourceDir(), CONFIG_PATH, configFileName)
-  return await executeBack('easytier-core', ['-c', `${corePath}`])
+export async function runEasyTierCore(configFileName: string): Promise<any> {
+  try {
+    const configPath = await join(await resourceDir(), CONFIG_PATH, configFileName)
+    const program = await getCoreDir()
+    const res = await invoke('run_command', {
+      program,
+      args: ['-c', `${configPath}`]
+    })
+    info('运行结果：' + res)
+    return res
+  } catch (error) {
+    console.error('运行 easytier-core失败:', error)
+    return 403
+  }
 }
 
 // 运行 easytier-cli 配置
-export async function runEasyTierCli(args: string[]) {
+export async function runEasyTierCli(args: string[]): Promise<any> {
   try {
-    return await executeCmd('easytier-cli', args)
+    const program = await getCliDir()
+    return await invoke('run_cli', {
+      program,
+      args
+    })
   } catch (error) {
+    console.error('获取结果失败:', error)
+    return 403
+  }
+}
+
+export async function runCmd(args: string[]): Promise<any> {
+  try {
+    const program = await getCliDir()
+    return await invoke('run_cli', {
+      program,
+      args
+    })
+  } catch (error) {
+    console.error('获取结果失败:', error)
     return 403
   }
 }
@@ -417,7 +452,7 @@ export const startServiceOnWindows = (serviceName: string) => {
     try {
       const args = ['start', serviceName]
       await executeCmd(NSSM_NAME, args, { encoding: 'gbk' })
-      await sleep(1500)
+      await sleep(2000)
       const res = await checkServiceOnWindows(serviceName)
       info('启动服务:' + JSON.stringify(res))
       if (res && (res.code! === 0 || res.includes('SERVICE'))) {

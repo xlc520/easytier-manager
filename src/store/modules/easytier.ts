@@ -1,6 +1,9 @@
+import { CORE_INFO_API, MONITOR_LIST, PROXY_URL, USER_AGENT } from '@/constants/easytier'
 import { resourceDir } from '@tauri-apps/api/path'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { fetch } from '@tauri-apps/plugin-http'
+import dayjs from 'dayjs'
 
 export const useEasyTierStore = defineStore(
   'easytier',
@@ -20,6 +23,12 @@ export const useEasyTierStore = defineStore(
     const errRunNotify = ref(true)
     const defaultFormData = ref()
     const os = ref('windows')
+    const releaseInfo = ref([])
+    const publicPeerList = ref([])
+    const defaultStatus = JSON.stringify({
+      status: 'true',
+      date: dayjs().format('YYYYMMDD').toString()
+    })
     const setConfigList = (list) => {
       configList.value = list
     }
@@ -99,6 +108,55 @@ export const useEasyTierStore = defineStore(
       // configJsonObj.configPath = RESOURCE_PATH
       // await writeConfigJsonObj(configJsonObj)
     }
+    const getCoreReleaseInfo = async () => {
+      const localRes = JSON.parse(localStorage.getItem('releaseInfo') || '[]')
+      const isGet = JSON.parse(localStorage.getItem('releaseInfoIsGet') || defaultStatus)
+      const date = dayjs().format('YYYYMMDD').toString()
+      if ((isGet.data !== date && isGet.status === 'false') || releaseInfo.value.length === 0) {
+        const response = await fetch(PROXY_URL + CORE_INFO_API, {
+          method: 'GET',
+          headers: { 'User-Agent': USER_AGENT },
+          connectTimeout: 30000
+        })
+        releaseInfo.value = await response.json()
+        localStorage.setItem('releaseInfo', JSON.stringify(releaseInfo.value))
+        localStorage.setItem(
+          'releaseInfoIsGet',
+          JSON.stringify({
+            status: 'true',
+            date
+          })
+        )
+      }
+      releaseInfo.value = localRes
+      return releaseInfo.value
+    }
+    const getPublicPeerList = async () => {
+      const localRes = JSON.parse(localStorage.getItem('publicPeerList') || '[]')
+      const isGet = JSON.parse(localStorage.getItem('publicPeerListIsGet') || defaultStatus)
+      const date = dayjs().format('YYYYMMDD').toString()
+      if ((isGet.data !== date && isGet.status === 'false') || publicPeerList.value.length === 0) {
+        const response = await fetch(MONITOR_LIST, {
+          method: 'GET',
+          headers: { 'User-Agent': USER_AGENT },
+          connectTimeout: 30000
+        })
+        const res = await response.json()
+        if (res && res.code === 0) {
+          publicPeerList.value = res.data.list
+          localStorage.setItem('publicPeerList', JSON.stringify(publicPeerList.value))
+          localStorage.setItem(
+            'publicPeerListIsGet',
+            JSON.stringify({
+              status: 'true',
+              date
+            })
+          )
+        }
+      }
+      publicPeerList.value = localRes
+      return publicPeerList.value
+    }
     return {
       configPath,
       configList,
@@ -128,7 +186,9 @@ export const useEasyTierStore = defineStore(
       setDefaultFormData,
       setErrRunNotify,
       setOs,
-      setConfigPath
+      setConfigPath,
+      getCoreReleaseInfo,
+      getPublicPeerList
     }
   },
   {

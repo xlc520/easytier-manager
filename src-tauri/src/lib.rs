@@ -1,5 +1,59 @@
+use std::os::windows::process::CommandExt;
+use std::process::Command;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_log::{Target, TargetKind};
+
+#[tauri::command(rename_all = "snake_case")]
+fn run_cli(program: String, args: Vec<String>) -> String {
+    // CREATE_NO_WINDOW: 不创建控制台窗口
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    // DETACHED_PROCESS: 使进程在后台运行
+    const DETACHED_PROCESS: u32 = 0x00000008;
+    // 尝试执行命令并捕获输出
+    match Command::new(&program)
+        .args(args)
+        .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
+        .output() // 使用 output() 来获取输出
+    {
+        Ok(output) => {
+            // 将输出转换为字符串并返回
+            match String::from_utf8(output.stdout) {
+                Ok(result) => result,
+                Err(e) => format!("Error decoding output: {}", e), // 返回解码错误信息
+            }
+        }
+        Err(e) => {
+            println!("Failed to execute process: {}", e);
+            return format!("Error: {}", e); // 返回错误信息
+        }
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn run_command(program: String, args: Vec<String>) -> String {
+    // CREATE_NO_WINDOW: 不创建控制台窗口
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    // DETACHED_PROCESS: 使进程在后台运行
+    const DETACHED_PROCESS: u32 = 0x00000008;
+
+    // 尝试执行命令并捕获错误
+    match Command::new(&program)
+        .args(args)
+        .stdout(std::process::Stdio::null()) // 将标准输出重定向到null
+        .stderr(std::process::Stdio::null()) // 将标准错误重定向到null
+        .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
+        .spawn()
+    {
+        Ok(child) => {
+            let pid = child.id(); // 获取进程ID
+            return pid.to_string(); // 返回进程ID
+        }
+        Err(e) => {
+            println!("Failed to execute process: {}", e);
+            return format!("Error: {}", e); // 返回错误信息
+        }
+    };
+}
 
 fn show_window(app: &AppHandle) {
     let windows = app.webview_windows();
@@ -15,6 +69,7 @@ fn show_window(app: &AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![run_command, run_cli])
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = show_window(app);
         }))

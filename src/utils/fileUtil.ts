@@ -48,6 +48,14 @@ export const getResourceDir = async () => {
   await checkDir()
   return await join(await resourceDir(), RESOURCE_PATH)
 }
+export const getCliDir = async () => {
+  await checkDir()
+  return await join(await resourceDir(), RESOURCE_PATH, 'easytier-cli')
+}
+export const getCoreDir = async () => {
+  await checkDir()
+  return await join(await resourceDir(), RESOURCE_PATH, 'easytier-core')
+}
 // 获取resource下的logs目录
 export const getLogsDir = async () => {
   await checkDir(LOG_PATH)

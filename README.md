@@ -81,6 +81,16 @@ EasyTier 管理器 整合Vue3 + Vite5 + Electron33 + Element-Plus， 是一个�
 
 [BUG 提交 | 需求建议](https://github.com/xlc520/easytier-manager/issues/new/choose)
 
+## 其他问题
+
+1.由于Windows 10 和 Windows 11 的权限问题，需要使用管理员权限运行，所以需要手动设置exe的权限，设置为以管理员身份运行
+
+2.由于Windows更新导致部分环境变量失效问题，例如无法使用`ping` `wmic` `netsh`等命令（可以在cmd输入直接测试），需要手动重新设置环境变量，由于修改的是系统环境变量，请搜索大量教程资料，再进行设置（一般是设置System32、SysWOW64目录）
+
+3.由于Windows 10 和 Windows 11 的权限问题，需要使用管理员权限运行，所以需要手动设置exe的权限，设置为以管理员身份运行
+
+4.如果是Windows7系统，无法启动，可能需要打补丁，参考：https://github.com/EasyTier/EasyTier/issues/144#issuecomment-2164195462
+
 ## 前序准备
 
 - [node](http://nodejs.org/) 和 [git](https://git-scm.com/) - 项目开发环境

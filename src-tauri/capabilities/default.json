@@ -113,6 +113,16 @@
         },
         {
           "args": true,
+          "cmd": "runas",
+          "name": "runas"
+        },
+        {
+          "args": true,
+          "cmd": "sudo",
+          "name": "sudo"
+        },
+        {
+          "args": true,
           "cmd": "netsh",
           "name": "netsh"
         },
@@ -160,6 +170,16 @@
           "args": true,
           "cmd": "cmd",
           "name": "cmd"
+        },
+        {
+          "args": true,
+          "cmd": "runas",
+          "name": "runas"
+        },
+        {
+          "args": true,
+          "cmd": "sudo",
+          "name": "sudo"
         },
         {
           "args": true,

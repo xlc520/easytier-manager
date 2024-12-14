@@ -43,6 +43,7 @@ export default {
     delSuccess: '删除成功',
     delError: '删除失败',
     accessSuccess: '操作成功',
+    accessError: '操作失败',
     refresh: '刷新',
     fullscreen: '全屏',
     size: '尺寸',

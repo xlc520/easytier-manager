@@ -350,9 +350,11 @@ import { useI18n } from '@/hooks/web/useI18n'
 import { getLogsDir } from '@/utils/fileUtil'
 import { getHostname } from '@/utils/sysUtil'
 import { fetch } from '@tauri-apps/plugin-http'
-import { info } from '@tauri-apps/plugin-log'
+import { MONITOR_LIST } from '@/constants/easytier'
+import { useEasyTierStore } from '@/store/modules/easytier'
 
 const { t } = useI18n()
+const easyTierStore = useEasyTierStore()
 const props = defineProps({
   formData: {
     type: Object as PropType<FormData>,
@@ -507,10 +509,11 @@ const flags_default_protocolOptions = reactive([
   }
 ])
 const getPublicPeers = async () => {
-  const res = await fetch('http://easytier.api.cheng.us.kg/getMonitorList')
-  const data = await res.json()
-  if (data && data.code === 0) {
-    peersOptions.value = data.data.list
+  const data = await easyTierStore.getPublicPeerList()
+  console.log('data', data)
+
+  if (data) {
+    peersOptions.value = data
   }
 }
 watch(
