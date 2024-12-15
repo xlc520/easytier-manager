@@ -100,4 +100,5 @@ interface RunningItem {
   configFileName: string
   fileName?: string
   pid?: number
+  serviceStatus?: string
 }

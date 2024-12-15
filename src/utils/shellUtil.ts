@@ -39,9 +39,9 @@ export async function executeCmd(
     })
     // 执行并等待完成
     const output = await command.execute()
-    // debug('执行命令输出:' + JSON.stringify(output))
-    if (output.code !== 0 && output.code !== 1) {
-      throw output.stderr.trim() || output.stdout.trim() || output
+    // info('执行命令输出:' + JSON.stringify(output))
+    if (output.code && output.code !== 0 && output.code !== 1) {
+      return output.stderr.trim() || output.stdout.trim() || output
     }
     return output.stdout.trim() || output
   } catch (e: any) {
@@ -159,11 +159,13 @@ export async function runEasyTierCore(configFileName: string): Promise<any> {
 // 运行 easytier-cli 配置
 export async function runEasyTierCli(args: string[]): Promise<any> {
   try {
-    const program = await getCliDir()
-    return await invoke('run_cli', {
-      program,
-      args
-    })
+    return await executeCmd('easytier-cli', args)
+    // 使用rust api 会出现卡顿
+    // const program = await getCliDir()
+    // return await invoke('run_cli', {
+    //   program,
+    //   args
+    // })
   } catch (error) {
     console.error('获取结果失败:', error)
     return 403
@@ -211,7 +213,7 @@ export async function killProcess(pid: number, force: boolean = true): Promise<b
       const signal = force ? '-9' : '-15' // SIGKILL vs SIGTERM
       const _result = await executeCmd('kill', [signal, pid.toString()])
     }
-    info(`进程 ${pid} 已${force ? '强制' : ''}终止`)
+    info(`进程 ${pid} 已终止`)
     return true
   } catch (e: any) {
     error(`终止进程 ${pid} 失败:` + JSON.stringify(e))
@@ -343,12 +345,12 @@ export const checkServiceOnWindows = (serviceName: string): Promise<any> => {
       const args = ['status', serviceName]
       const res: any = await executeCmd(NSSM_NAME, args, { encoding: 'gbk' })
       // debug('检测服务:' + res)
-      if (res && res.code! === 0) {
+      if (res && res.code! === 3) {
         resolve(false)
       }
       resolve(res)
     } catch (e: any) {
-      error('检测服务出错:' + JSON.stringify(e))
+      // error('检测服务出错:' + JSON.stringify(e))
       resolve(false)
     }
   })

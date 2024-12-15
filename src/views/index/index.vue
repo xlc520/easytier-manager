@@ -235,7 +235,6 @@ const getPeerInfo = async () => {
   }
 }
 const updateRunningList = async (res?: any) => {
-  currentNodeKey.value.fileName!
   if (!res) {
     res = await getRunningProcesses(currentNodeKey.value.fileName!)
   }
@@ -278,11 +277,9 @@ const startAction = async () => {
 }
 const stopAction = async () => {
   info('停止运行配置:' + currentNodeKey.value.configFileName)
-  // easyTierStore.setErrRunNotify(false)
-  const pid = easyTierStore.getRunningItem(currentNodeKey.value.configFileName)?.pid
-  if (pid) {
-    const res = await killProcess(pid)
-    info('停止运行配置结果:' + JSON.stringify(res))
+  const item = easyTierStore.getRunningItem(currentNodeKey.value.configFileName)
+  if (item && item.pid) {
+    const res = await killProcess(item.pid)
     if (res) {
       await reset()
       ElNotification({
@@ -293,6 +290,8 @@ const stopAction = async () => {
       })
     }
   } else {
+    easyTierStore.removeRunningList(currentNodeKey.value.configFileName)
+    await updateRunningList()
     ElNotification({
       title: t('common.reminder'),
       message: '当前配置未运行',
@@ -302,8 +301,6 @@ const stopAction = async () => {
   }
   trayStore.setTrayTooltip(undefined)
   easyTierStore.setStopLoop(true)
-  easyTierStore.removeRunningList(currentNodeKey.value.configFileName)
-  await updateRunningList()
   runningTag2.value = false
   // currentNodeKeyChange()
 }
@@ -374,8 +371,8 @@ onMounted(async () => {
   await checkCore()
   await getConfigList()
   easyTierStore.loadRunningList()
-  getNodeInfo()
-  getPeerInfo()
+  // getNodeInfo()
+  // getPeerInfo()
   const configName = easyTierStore.getLastRunConfigName()
   if (configName) {
     currentNodeKey.value.configFileName = configName

@@ -8,11 +8,11 @@ fn run_cli(program: String, args: Vec<String>) -> String {
     // CREATE_NO_WINDOW: 不创建控制台窗口
     const CREATE_NO_WINDOW: u32 = 0x08000000;
     // DETACHED_PROCESS: 使进程在后台运行
-    const DETACHED_PROCESS: u32 = 0x00000008;
+    // const DETACHED_PROCESS: u32 = 0x00000008;
     // 尝试执行命令并捕获输出
     match Command::new(&program)
         .args(args)
-        .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
+        .creation_flags(CREATE_NO_WINDOW)
         .output() // 使用 output() 来获取输出
     {
         Ok(output) => {
@@ -34,14 +34,14 @@ fn run_command(program: String, args: Vec<String>) -> String {
     // CREATE_NO_WINDOW: 不创建控制台窗口
     const CREATE_NO_WINDOW: u32 = 0x08000000;
     // DETACHED_PROCESS: 使进程在后台运行
-    const DETACHED_PROCESS: u32 = 0x00000008;
+    // const DETACHED_PROCESS: u32 = 0x00000008;
 
     // 尝试执行命令并捕获错误
     match Command::new(&program)
         .args(args)
         .stdout(std::process::Stdio::null()) // 将标准输出重定向到null
         .stderr(std::process::Stdio::null()) // 将标准错误重定向到null
-        .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
+        .creation_flags(CREATE_NO_WINDOW)
         .spawn()
     {
         Ok(child) => {

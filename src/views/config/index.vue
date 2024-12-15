@@ -22,7 +22,7 @@ import {
   testWMIC,
   uninstallServiceOnWindows
 } from '@/utils/shellUtil'
-import { getHostname, getOsType } from '@/utils/sysUtil'
+import { getHostname, getOsType, sleep } from '@/utils/sysUtil'
 import { join, resourceDir } from '@tauri-apps/api/path'
 import { attachConsole, error, info } from '@tauri-apps/plugin-log'
 import { ElMessageBox, ElNotification } from 'element-plus'
@@ -50,21 +50,26 @@ const configFileName = ref<string | null>(null)
 const errorMessage = ref('')
 const logsDir = ref('')
 const prefixSvc = 'easytier-'
+const checkServiceStatus = async () => {
+  await sleep(1500)
+  easyTierStore.configList.forEach(async (item) => {
+    const status = await checkServiceOnWindows(prefixSvc + item.configFileName)
+    item.serviceStatus = serviceStatusDict(status)
+  })
+}
 const getConfigList = async () => {
   const fileList = await listTomlFiles()
   const tmpList: any = []
   for (const f of fileList) {
     const configName = f.replace('.toml', '')
-    const status = await checkServiceOnWindows(prefixSvc + configName)
     tmpList.push({
       configFileName: configName,
       fileName: f,
-      serviceStatus: serviceStatusDict(status)
+      serviceStatus: '未知'
     })
   }
   easyTierStore.setConfigList(tmpList)
-
-  return tmpList
+  checkServiceStatus()
 }
 const serviceStatusDict = (status: string | boolean) => {
   if (!status) {
@@ -482,8 +487,8 @@ watch(configFileName, (value) => {
 })
 onMounted(async () => {
   // 启用 TargetKind::Webview 后，这个函数将把日志打印到浏览器控制台
-  await attachConsole()
-  await getConfigList()
+  attachConsole()
+  getConfigList()
   logsDir.value = await getLogsDir()
   easyTierStore.setOs(await getOsType())
   noWMIC.value = !(await testWMIC())
