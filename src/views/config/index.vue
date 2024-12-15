@@ -64,8 +64,7 @@ const getConfigList = async () => {
     const configName = f.replace('.toml', '')
     tmpList.push({
       configFileName: configName,
-      fileName: f,
-      serviceStatus: '未知'
+      fileName: f
     })
   }
   easyTierStore.setConfigList(tmpList)

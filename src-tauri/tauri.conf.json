@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "easytier-manager-pro",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "identifier": "easytier-manager-pro",
   "build": {
     "frontendDist": "../dist",
