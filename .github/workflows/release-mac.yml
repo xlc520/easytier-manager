@@ -1,0 +1,49 @@
+name: Release MacOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: contains('["xlc520"]', github.actor)
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Compile project
+        run: pnpm run build:compile
+
+      - name: Build for MacOS
+        run: pnpm run build:mac
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-${{ matrix.os }}
+          path: release
+
+      - name: Upload to GitHub Releases
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          fail_on_unmatched_files: false
+          files: |
+            release/*.dmg
+            release/*.blockmap
+            release/latest*.yml

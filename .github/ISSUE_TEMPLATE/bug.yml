@@ -21,6 +21,13 @@ body:
     attributes:
       label: "内核版本"
       description: "设置页面，最上面查看当前内核版本。"
+  - type: input
+    id: versionWindows
+    validations:
+      required: false
+    attributes:
+      label: "Windows版本和版本号"
+      description: "设置页面，系统信息，例如：Windows 11 专业版 23H2"
   - type: markdown
     id: details
     attributes:
