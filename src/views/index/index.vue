@@ -231,7 +231,7 @@ const getPeerInfo = async () => {
       easyTierStore.setP2pNotify(false)
     }
     // await getList()
-    await sleep(5000)
+    await sleep(7000)
   }
 }
 const updateRunningList = async (res?: any) => {

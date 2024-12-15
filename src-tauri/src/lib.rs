@@ -55,6 +55,19 @@ fn run_command(program: String, args: Vec<String>) -> String {
     };
 }
 
+#[tauri::command]
+fn get_exe_directory() -> String {
+    match std::env::current_exe() {
+        Ok(exe_path) => {
+            return exe_path.parent().unwrap().display().to_string();
+        }
+        Err(e) => {
+            println!("failed to get current exe path: {e}");
+            return "".to_string();
+        }
+    };
+}
+
 fn show_window(app: &AppHandle) {
     let windows = app.webview_windows();
 
@@ -68,8 +81,11 @@ fn show_window(app: &AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 创建 logs 目录
+    let _ = std::fs::create_dir_all(format!("{}/logs", get_exe_directory()));
+
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![run_command, run_cli])
+        .invoke_handler(tauri::generate_handler![run_command, run_cli, get_exe_directory])
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = show_window(app);
         }))
@@ -77,7 +93,13 @@ pub fn run() {
             tauri_plugin_log::Builder::new()
                 .targets([
                     Target::new(TargetKind::Stdout),
-                    Target::new(TargetKind::LogDir { file_name: None }),
+                    Target::new(TargetKind::LogDir {
+                        file_name: Some(format!(
+                            "{}/logs/{}",
+                            get_exe_directory(),
+                            env!("CARGO_PKG_NAME")
+                        )),
+                    }),
                     Target::new(TargetKind::Webview),
                 ])
                 .build(),

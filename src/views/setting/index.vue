@@ -170,10 +170,10 @@ const openLogPath = async () => {
   const resourcePath = await join(await resourceDir(), LOG_PATH)
   await openPath(resourcePath)
 }
-const openLogPath2 = async () => {
-  const resourcePath = await appLogDir()
-  await openPath(resourcePath)
-}
+// const openLogPath2 = async () => {
+//   const resourcePath = await appLogDir()
+//   await openPath(resourcePath)
+// }
 const restoreWinState = async () => {
   ElMessageBox.confirm(
     '要恢复窗口状态，需要退出软件后删除目录下的 .windowState.json 文件，重新启动软件',
@@ -218,7 +218,7 @@ const checkUpdate = async () => {
       type: 'warning'
     })
       .then(() => {
-        open(MANAGER_REPO_URL)
+        openPath(MANAGER_REPO_URL)
       })
       .catch(() => {
         ElNotification({
@@ -251,6 +251,7 @@ onMounted(async () => {
   form.logAppPath = await appLogDir()
   form.appVersion = await getAppVersion()
   verOptions.value = await easyTierStore.getCoreReleaseInfo()
+  verSelect.value = verOptions.value[0].tag_name
   // form.appLogLevel = await getLogLevel()
   const winUrlTemplate = template(EASYTIER_NAME)
   // easytier-windows-x86_64-v2.0.3.zip
@@ -354,10 +355,10 @@ onMounted(async () => {
           {{ form.logPath }}<br />
           <el-button type="primary" @click="openLogPath">{{ t('easytier.openLogPath') }}</el-button>
           <br />
-          {{ form.logAppPath }}<br />
-          <el-button type="primary" @click="openLogPath2"
-            >{{ t('easytier.openAppLogPath') }}
-          </el-button>
+          <!--  {{ form.logAppPath }}<br />
+                    <el-button type="primary" @click="openLogPath2"
+                      >{{ t('easytier.openAppLogPath') }}
+                    </el-button>-->
           <!-- <el-button type="info" @click="copyLogPath">{{ t('easytier.copyLogPath') }}</el-button> -->
         </el-descriptions-item>
 
@@ -409,7 +410,7 @@ onMounted(async () => {
           <el-button type="info" @click="restoreWinState"
             >{{ t('easytier.restoreWinState') }}
           </el-button>
-          <el-button type="danger" @click="clearCache">{{ t('easytier.clearCache') }} </el-button>
+          <el-button type="danger" @click="clearCache">{{ t('easytier.clearCache') }}</el-button>
           <el-button
             type="primary"
             @click="openPath('https://github.com/xlc520/easytier-manager/issues')"

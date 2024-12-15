@@ -20,7 +20,8 @@
         "center": true,
         "visible": true,
         "decorations": true,
-        "transparent": false
+        "transparent": false,
+        "devtools": false
       }
     ],
     "security": {

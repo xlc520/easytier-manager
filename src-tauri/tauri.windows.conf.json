@@ -3,6 +3,7 @@
   "identifier": "easytier-manager-pro",
   "bundle": {
     "windows": {
+      "allowDowngrades": true,
       "webviewInstallMode": {
         "type": "embedBootstrapper",
         "silent": true

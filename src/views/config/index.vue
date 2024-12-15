@@ -498,15 +498,15 @@ onMounted(async () => {
         <BaseButton type="primary" @click="AddFormAction"
           >{{ t('easytier.addNetConfigForm') }}
         </BaseButton>
-        <BaseButton type="success" @click="refreshAction">{{ t('common.refresh') }} </BaseButton>
+        <BaseButton type="success" @click="refreshAction">{{ t('common.refresh') }}</BaseButton>
       </div>
       <el-text v-if="noWMIC" type="warning" effect="dark"
         >当前系统没有 wmic
-        命令，建议安装服务，使用当前页面的服务启动停止组网，工作台的状态可能不准<br
+        命令，建议安装服务，使用配置页面的服务启动停止组网，工作台的状态可能不准，或者忽略工作台的状态显示，只要表格有数据更新出来就是运行成功。<br
       /></el-text>
       <el-text v-if="easyTierStore.os === 'windows'" type="info" effect="dark"
-        >如果组网是由服务启动的，则只能使用启动服务和停止服务，无法使用首页的启动和停止</el-text
-      >
+        >如果组网是由服务启动的，则只能使用启动服务和停止服务，无法使用首页的启动和停止
+      </el-text>
       <el-table
         :data="easyTierStore.configList"
         height="60vh"
